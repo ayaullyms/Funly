@@ -244,7 +244,7 @@ async function saveTask(taskIdx) {
       editorTasks[taskIdx].id = data.task.id;
       toast('Task added ✓');
     }
-    navigate('admin');
+    renderTasksEditor();
   } catch(e) { toast(e.message, 'error'); }
   finally { if (btn) btn.disabled = false; }
 }

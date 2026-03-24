@@ -49,6 +49,9 @@ function renderAdminQuests(quests) {
         ${q.status === 'active'
           ? `<button class="btn btn-green btn-sm" onclick="finishQuest('${q.id}')">✓ Complete</button>`
           : ''}
+        ${q.status === 'draft'
+          ? `<button class="btn btn-ghost btn-sm" onclick="activateQuest('${q.id}')">▶ Activate</button>`
+          : ''}
         <button class="btn btn-ghost btn-sm" onclick="viewParticipants('${q.id}')">👥 Participants</button>
         <button class="btn btn-danger btn-sm" onclick="removeQuest('${q.id}')">🗑 Delete</button>
       </div>
@@ -77,6 +80,15 @@ async function viewParticipants(questId) {
   } catch(e) {
     el.innerHTML = `<p style="color:var(--red);font-size:13px">${e.message}</p>`;
   }
+}
+
+async function activateQuest(questId) {
+  if (!confirm('Activate this quest?')) return;
+  try {
+    await api.updateQuest(questId, { status: 'active' });
+    toast('Quest activated! ✓');
+    loadAdmin();
+  } catch(e) { toast(e.message, 'error'); }
 }
 
 async function finishQuest(questId) {

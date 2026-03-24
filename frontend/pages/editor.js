@@ -79,7 +79,7 @@ document.getElementById('btn-save-quest-info').addEventListener('click', async (
       const data = await api.createQuest(body);
       editorQuestId = data.quest.id;
       document.getElementById('editor-title').textContent = 'Edit Quest';
-      document.getElementById('danger-zone').style.display = 'block';
+      document.getElementById('danger-zone').style.display = 'none';
       toast('Quest created! 🎉');
     }
   } catch(e) { toast(e.message, 'error'); }
@@ -244,7 +244,7 @@ async function saveTask(taskIdx) {
       editorTasks[taskIdx].id = data.task.id;
       toast('Task added ✓');
     }
-    renderTasksEditor();
+    navigate('admin');
   } catch(e) { toast(e.message, 'error'); }
   finally { if (btn) btn.disabled = false; }
 }

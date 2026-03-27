@@ -172,7 +172,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: EditorPageProps)
           </div>
           <div>
             <label className="text-[11px] font-mono uppercase tracking-wide text-zinc-500 mb-1.5 block">Reward</label>
-            <Input placeholder="e.g. 100 TON" value={reward} onChange={e => setReward(e.target.value)} />
+            <Input placeholder="e.g. 100 Jetton" value={reward} onChange={e => setReward(e.target.value)} />
           </div>
           <div>
             <label className="text-[11px] font-mono uppercase tracking-wide text-zinc-500 mb-1.5 block">Rules</label>

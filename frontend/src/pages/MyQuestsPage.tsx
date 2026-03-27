@@ -91,11 +91,11 @@ function MyQuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) 
       </div>
       <div className="flex items-center gap-5">
         <div className="text-center">
-          <div className="font-mono text-xl font-black text-emerald-400">{q.myScore || 0}</div>
+          <div className="font-mono text-xl font-black text-emerald-400">{(q as any).score ?? q.myScore ?? 0}</div>
           <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500">Score</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-xl font-black text-zinc-100">{q.myRank ? '#' + q.myRank : '—'}</div>
+          <div className="font-mono text-xl font-black text-zinc-100">{((q as any).rank ?? q.myRank) ? '#' + ((q as any).rank ?? q.myRank) : '—'}</div>
           <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500">Rank</div>
         </div>
         <div className="ml-auto text-[12px] text-zinc-500">

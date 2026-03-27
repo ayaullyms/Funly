@@ -58,10 +58,10 @@ function AppInner() {
   const showHeader = !['detail', 'editor', 'task'].includes(page);
 
   return (
-    <div className="min-h-screen bg-[#4D2B8C] text-zinc-100">
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-24">
+    <div className="min-h-screen bg-zinc-50 text-zinc-100">
+      <div className="max-w-lg mx-auto px-4 pt-4 pb-24 bg-purple-100">
         {showHeader && PAGE_TITLE[page] && (
-          <h1 className="font-black text-[22px] text-zinc-100 mb-5">{PAGE_TITLE[page]}</h1>
+          <h1 className="font-black text-[22px] text-purple-800 mb-5">{PAGE_TITLE[page]}</h1>
         )}
 
         {page === 'home'     && <HomePage />}

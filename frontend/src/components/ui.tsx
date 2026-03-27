@@ -86,7 +86,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
   ({ className = '', ...props }, ref) => (
     <input
       ref={ref}
-      className={`w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors ${className}`}
+      className={`w-full bg-zinc-50 border border-purple-800 rounded-xl px-4 py-3 text-sm text-purple-800 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors ${className}`}
       {...props}
     />
   )
@@ -98,7 +98,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
   ({ className = '', ...props }, ref) => (
     <textarea
       ref={ref}
-      className={`w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors resize-none ${className}`}
+      className={`w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-purple-800 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors resize-none ${className}`}
       {...props}
     />
   )
@@ -121,7 +121,7 @@ Select.displayName = 'Select';
 export function Card({ children, className = '', onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
   return (
     <div
-      className={`bg-zinc-900 border border-zinc-800 rounded-2xl p-4 ${onClick ? 'cursor-pointer hover:border-zinc-700 active:scale-[0.99] transition-all duration-150' : ''} ${className}`}
+      className={`bg-zinc-50 border border-purple-800 rounded-2xl p-4 ${onClick ? 'cursor-pointer hover:border-purple-800 active:scale-[0.99] transition-all duration-150' : ''} ${className}`}
       onClick={onClick}
     >
       {children}

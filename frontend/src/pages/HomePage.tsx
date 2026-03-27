@@ -66,8 +66,8 @@ export function HomePage() {
             onClick={() => { setFilter(f.id); }}
             className={`flex-shrink-0 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               filter === f.id
-                ? 'bg-emerald-500 text-black'
-                : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+                ? 'bg-purple-500 text-white'
+                : 'bg-white text-purple-500 hover:text-purple-800'
             }`}
           >
             {f.label}
@@ -100,11 +100,11 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
       className={q.status === 'completed' ? 'opacity-70' : ''}
     >
       <div className="flex justify-between items-start gap-3 mb-2">
-        <h3 className="font-bold text-[15px] text-zinc-100 leading-snug flex-1">{q.title}</h3>
+        <h3 className="font-bold text-[15px] text-purple-800 leading-snug flex-1">{q.title}</h3>
         <Badge status={q.status} />
       </div>
       {q.shortDescription && (
-        <p className="text-zinc-400 text-[13px] mb-3 line-clamp-2">{q.shortDescription}</p>
+        <p className="text-purple-800 text-[13px] mb-3 line-clamp-2">{q.shortDescription}</p>
       )}
       <div className="flex items-center gap-3 text-[12px] text-zinc-500 flex-wrap">
         {q.rewardDescription && (
@@ -112,7 +112,7 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
         )}
         <span>{q.participantsCount || 0} participants</span>
         {q.endDate && <span>Ends {fmtDate(q.endDate)}</span>}
-        {q.isJoined && <span className="text-emerald-400 font-bold">Joined</span>}
+        {q.isJoined && <span className="text-purple-800 font-bold">Joined</span>}
       </div>
     </Card>
   );

@@ -28,9 +28,9 @@ export type QuestStatus = 'draft' | 'active' | 'completed' | 'pending' | 'distri
 
 export const STATUS_STYLES: Record<string, string> = {
   draft:       'bg-zinc-700 text-zinc-300',
-  active:      'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+  active:      'bg-purple-500/20 text-purple-400 border border-purple-500/30',
   completed:   'bg-zinc-600/50 text-zinc-400',
   pending:     'bg-amber-500/20 text-amber-400 border border-amber-500/30',
-  distributed: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+  distributed: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
   winner:      'bg-amber-500/20 text-amber-400 border border-amber-500/30',
 };

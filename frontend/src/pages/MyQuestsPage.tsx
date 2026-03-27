@@ -50,8 +50,8 @@ export function MyQuestsPage() {
             onClick={() => setFilter(f.id)}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
               filter === f.id
-                ? 'bg-emerald-500 text-black'
-                : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+                ? 'bg-purple-500 text-white'
+                : 'bg-white text-purple-500 hover:text-purple-800'
             }`}
           >
             {f.label}
@@ -83,7 +83,7 @@ function MyQuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) 
   return (
     <Card onClick={() => onOpen(q.id)}>
       <div className="flex justify-between items-start mb-3">
-        <h3 className="font-bold text-[15px] text-zinc-100 flex-1 pr-3">{q.title}</h3>
+        <h3 className="font-bold text-[15px] text-purple-800 flex-1 pr-3">{q.title}</h3>
         <div className="flex flex-col items-end gap-1.5">
           <Badge status={q.status} />
           {q.iWon && <Badge status="winner" />}
@@ -91,11 +91,11 @@ function MyQuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) 
       </div>
       <div className="flex items-center gap-5">
         <div className="text-center">
-          <div className="font-mono text-xl font-black text-emerald-400">{(q as any).score ?? q.myScore ?? 0}</div>
+          <div className="font-mono text-xl font-black text-purple-400">{(q as any).score ?? q.myScore ?? 0}</div>
           <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500">Score</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-xl font-black text-zinc-100">{((q as any).rank ?? q.myRank) ? '#' + ((q as any).rank ?? q.myRank) : '—'}</div>
+          <div className="font-mono text-xl font-black text-purple-400">{((q as any).rank ?? q.myRank) ? '#' + ((q as any).rank ?? q.myRank) : '—'}</div>
           <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500">Rank</div>
         </div>
         <div className="ml-auto text-[12px] text-zinc-500">

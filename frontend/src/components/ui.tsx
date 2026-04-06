@@ -70,9 +70,9 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
   const sz = size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm';
   const variants = {
     primary: 'bg-emerald-500 hover:bg-emerald-400 text-black',
-    ghost:   'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700',
+    ghost:   'bg-purple-800 hover:bg-purple-700 text-zinc-200 border border-purple-700',
     danger:  'bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30',
-    green:   'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30',
+    green:   'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30',
   };
   return (
     <button className={`${base} ${sz} ${variants[variant]} ${className}`} {...props}>
@@ -98,7 +98,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
   ({ className = '', ...props }, ref) => (
     <textarea
       ref={ref}
-      className={`w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-purple-800 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors resize-none ${className}`}
+      className={`w-full bg-purple-200 border border-purple-700 rounded-xl px-4 py-3 text-sm text-purple-800 placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/60 transition-colors resize-none ${className}`}
       {...props}
     />
   )
@@ -110,7 +110,7 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
   ({ className = '', ...props }, ref) => (
     <select
       ref={ref}
-      className={`w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500/60 transition-colors appearance-none ${className}`}
+      className={`w-full bg-purple-200 border border-purple-700 rounded-xl px-4 py-3 text-sm text-purple-800 focus:outline-none focus:border-emerald-500/60 transition-colors appearance-none ${className}`}
       {...props}
     />
   )
@@ -133,7 +133,7 @@ export function Card({ children, className = '', onClick }: { children: React.Re
 export function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
-    <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+    <div className="w-full h-1.5 bg-purple-800 rounded-full overflow-hidden">
       <div
         className="h-full bg-emerald-400 rounded-full transition-all duration-500"
         style={{ width: `${pct}%` }}
@@ -151,15 +151,15 @@ interface TabsProps {
 
 export function Tabs({ tabs, active, onChange }: TabsProps) {
   return (
-    <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+    <div className="flex gap-1 bg-purple-200 border border-purple-800 rounded-xl p-1">
       {tabs.map(tab => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-150 ${
             active === tab.id
-              ? 'bg-zinc-700 text-zinc-100'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'bg-purple-800 text-zinc-100'
+              : 'text-zinc-500 hover:text-purple-500'
           }`}
         >
           {tab.label}
@@ -194,7 +194,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 // ── StatCard ──────────────────────────────────
 export function StatCard({ value, label, color = 'text-zinc-100' }: { value: React.ReactNode; label: string; color?: string }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+    <div className="bg-white border border-purple-800 rounded-2xl p-4 text-center">
       <div className={`font-mono text-2xl font-black ${color}`}>{value}</div>
       <div className="text-[11px] font-mono uppercase tracking-wide text-zinc-500 mt-1">{label}</div>
     </div>

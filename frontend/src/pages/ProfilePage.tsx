@@ -60,20 +60,20 @@ export function ProfilePage() {
     <div className="flex flex-col gap-6 pb-2">
       {/* Avatar & name */}
       <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div className="w-14 h-14 rounded-2xl bg-purple-800 border border-purple-700 flex items-center justify-center overflow-hidden flex-shrink-0">
           {user.photoUrl
             ? <img src={user.photoUrl} alt="" className="w-full h-full object-cover" />
             : <span className="text-xl font-black text-zinc-300">{(user.firstName?.[0] || '?').toUpperCase()}</span>
           }
         </div>
         <div>
-          <div className="font-bold text-[18px] text-zinc-100">
+          <div className="font-bold text-[18px] text-purple-800">
             {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Anonymous'}
           </div>
           {user.username && <div className="text-zinc-500 text-sm">@{user.username}</div>}
           <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-wide ${
             user.role === 'admin'
-              ? 'bg-amber-500/15 text-amber-400'
+              ? 'bg-purple-500/15 text-purple-400'
               : 'bg-emerald-500/15 text-emerald-400'
           }`}>
             {user.role}

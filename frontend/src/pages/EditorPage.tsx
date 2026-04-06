@@ -149,7 +149,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: EditorPageProps)
     <div className="flex flex-col gap-5 pb-6">
       <div className="flex items-center gap-3">
         <BackButton onClick={onBack} label="Admin" />
-        <h1 className="font-black text-[18px] text-zinc-100">
+        <h1 className="font-black text-[18px] text-purple-800">
           {questId ? 'Edit Quest' : 'New Quest'}
         </h1>
       </div>
@@ -266,10 +266,10 @@ function TaskEditorItem({ task: t, index: i, onChange, onRemove, onSave }: TaskE
     <Card id={`task-editor-${i}`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-zinc-700 flex items-center justify-center text-[12px] font-bold text-zinc-300">
+          <div className="w-7 h-7 rounded-xl bg-purple-700 flex items-center justify-center text-[12px] font-bold text-zinc-300">
             {i + 1}
           </div>
-          <span className="font-bold text-sm text-zinc-200">Task {i + 1}</span>
+          <span className="font-bold text-sm text-purple-800">Task {i + 1}</span>
         </div>
         <Button size="sm" variant="danger" onClick={onRemove}>Remove</Button>
       </div>

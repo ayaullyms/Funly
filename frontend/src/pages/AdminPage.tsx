@@ -119,7 +119,7 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove }: Adm
     <Card>
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1 pr-3">
-          <div className="font-bold text-[15px] text-zinc-100">{q.title}</div>
+          <div className="font-bold text-[15px] text-purple-800">{q.title}</div>
           <div className="text-zinc-500 text-[12px] mt-0.5">{q.participantsCount || 0} participants</div>
         </div>
         <Badge status={q.status} />

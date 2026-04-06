@@ -95,15 +95,15 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: TaskPagePr
   return (
     <div className="flex flex-col gap-5 pb-4">
       {/* Hero */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+      <div className="bg-white border border-purple-800 rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <BackButton onClick={onBack} label="Tasks" />
-          <span className="font-mono text-[12px] text-zinc-500 font-bold">
+          <span className="font-mono text-[12px] text-purple-500 font-bold">
             {taskNum} / {totalTasks}
           </span>
         </div>
         <ProgressBar value={taskNum - 1} max={totalTasks} />
-        <div className="flex justify-between text-[11px] text-zinc-500 mt-1.5 font-mono">
+        <div className="flex justify-between text-[11px] text-purple-500 mt-1.5 font-mono">
           <span>{quest.title}</span>
           <span>+{currentTask.points} pts</span>
         </div>
@@ -128,18 +128,18 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: TaskPagePr
             <button
               key={i}
               onClick={() => setSelectedAnswer(o)}
-              className={`flex items-center gap-3 w-full text-left bg-zinc-800 border rounded-xl px-4 py-3.5 transition-all duration-150 ${
+              className={`flex items-center gap-3 w-full text-left bg-white border rounded-xl px-4 py-3.5 transition-all duration-150 ${
                 selectedAnswer === o
-                  ? 'border-emerald-400 bg-emerald-500/10'
-                  : 'border-zinc-700 hover:border-zinc-500'
+                  ? 'border-purple-400 purple-500/10'
+                  : 'border-white hover:border-purple-500'
               }`}
             >
               <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold flex-shrink-0 ${
-                selectedAnswer === o ? 'bg-emerald-500 text-black' : 'bg-zinc-700 text-zinc-400'
+                selectedAnswer === o ? 'bg-purple-500 text-black' : 'bg-zinc-700 text-zinc-400'
               }`}>
                 {LETTERS[i] || i + 1}
               </span>
-              <span className="text-sm text-zinc-200">{o}</span>
+              <span className="text-sm text-white">{o}</span>
             </button>
           ))}
           <Button
@@ -201,7 +201,7 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
       <div className="flex flex-col gap-2.5">
         {opts.map((o, i) => {
           const isSelected = o === task.myAnswer;
-          let cls = 'border-zinc-700 bg-zinc-800';
+          let cls = 'border-purple-700 bg-white';
           if (isSelected && isCorrect) cls = 'border-emerald-400 bg-emerald-500/10';
           else if (isSelected && !isCorrect) cls = 'border-red-400 bg-red-500/10';
 
@@ -211,11 +211,11 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
               className={`flex items-center gap-3 w-full text-left border rounded-xl px-4 py-3.5 ${cls}`}
             >
               <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold flex-shrink-0 ${
-                isSelected ? (isCorrect ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white') : 'bg-zinc-700 text-zinc-400'
+                isSelected ? (isCorrect ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white') : 'bg-purple-700 text-white'
               }`}>
                 {LETTERS[i] || i + 1}
               </span>
-              <span className="text-sm text-zinc-200">{o}</span>
+              <span className="text-sm text-purple-800">{o}</span>
             </div>
           );
         })}

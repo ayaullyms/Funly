@@ -107,6 +107,7 @@ async function getQuest(req, res) {
 
     const myParticipation = quest.participants[0] || null;
     const myCompletedTasks = quest.tasks.filter(t => t.submissions.length > 0).length;
+    const myCorrectTasks = quest.tasks.filter(t => t.submissions.some(s => s.isCorrect)).length;
     const totalTasks = quest._count.tasks;
 
     res.json({
@@ -119,13 +120,14 @@ async function getQuest(req, res) {
         iWon: myParticipation?.isWinner ?? false,
         totalTasks,               
         myCompletedTasks,
+        myCorrectTasks,
         isQuestCompleted: myParticipation?.status === 'completed',
         participants: undefined,
         _count: undefined,
       },
       tasks: quest.tasks.map(t => ({
         ...t,
-        correctAnswer: undefined, // never expose to client
+        correctAnswer: undefined,
         options: t.options || [],
         myAnswerCorrect: t.submissions[0]?.isCorrect ?? null,
         myPoints: t.submissions[0]?.pointsAwarded ?? null,
@@ -137,70 +139,6 @@ async function getQuest(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-
-// GET /api/quests/:id/leaderboard
-// async function getLeaderboard(req, res) {
-//   try {
-//     const { id } = req.params;
-
-//     const top50 = await prisma.questParticipant.findMany({
-//       where: { questId: id },
-//       orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
-//       take: 50,
-//       include: {
-//         user: { select: { username: true, firstName: true, lastName: true, photoUrl: true } },
-//       },
-//     });
-
-//     const myEntry = await prisma.questParticipant.findUnique({
-//       where: { questId_userId: { questId: id, userId: req.user.id } },
-//       select: { score: true, rank: true, isWinner: true, status: true },
-//     });
-
-//     let myPosition = null;
-//     if (myEntry) {
-//       const isInTop50 = top50.some(e => e.userId === req.user.id);
-//       if (isInTop50) {
-//         myPosition = top50.findIndex(e => e.userId === req.user.id) + 1;
-//       } else {
-//         const aheadCount = await prisma.questParticipant.count({
-//           where: {
-//             questId: id,
-//             OR: [
-//               { score: { gt: myEntry.score } },
-//               { score: myEntry.score, joinedAt: { lt: new Date() } },
-//             ],
-//           },
-//         });
-//         myPosition = aheadCount + 1;
-//       }
-//     }
-
-//     res.json({
-//       leaderboard: entries.map((e, i) => ({
-//         rank: i + 1,
-//         score: e.score,
-//         isWinner: e.isWinner,
-//         status: e.status,
-//         isMe: e.userId === req.user.id,
-//         username: e.user.username,
-//         firstName: e.user.firstName,
-//         lastName: e.user.lastName,
-//         photoUrl: e.user.photoUrl,
-//       })),
-//       myPosition: myEntry ? {
-//         rank: myPosition,
-//         score: myEntry.score,
-//         isWinner: myEntry.isWinner,
-//         status: myEntry.status,
-//         inTop50: top50.some(e => e.userId === req.user.id),
-//       } : null,
-//       totalParticipants: await prisma.questParticipant.count({ where: { questId: id } }),
-//     });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// }
 
 async function getLeaderboard(req, res) {
   try {

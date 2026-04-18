@@ -68,17 +68,12 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: TaskPagePr
         myScore: res.currentScore,
         myRank: res.currentRank,
         myCompletedTasks: (quest.myCompletedTasks || 0) + 1,
-        ...(res.questCompleted ? { isQuestCompleted: true, myStatus: 'completed' } : {}),
       });
 
       showToast(
         res.isCorrect ? `Correct! +${res.pointsAwarded} pts` : 'Wrong answer',
         res.isCorrect ? 'success' : 'error'
       );
-
-      if (res.questCompleted) {
-        setTimeout(() => showToast('Quest completed!', 'success'), 1000);
-      }
     } catch (e: any) {
       showToast(e.message, 'error');
     } finally {

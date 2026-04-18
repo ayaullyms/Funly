@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;600;700;800&display=swap');
+
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -14,14 +16,12 @@
   }
 
   body {
-    background-color: #ffffff;
-    color: #f4f4f5;
+    background-color: #0D0D14;
+    color: #e8e0ff;
     overscroll-behavior: none;
   }
 
-  ::-webkit-scrollbar {
-    display: none;
-  }
+  ::-webkit-scrollbar { display: none; }
 
   input[type='date']::-webkit-calendar-picker-indicator {
     filter: invert(0.7);
@@ -33,10 +33,18 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* Card base */
+  .card {
+    background: #13131f;
+    border: 0.5px solid #1e1e32;
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  /* Gradient hero used in TaskPage / DetailPage */
+  .hero-gradient {
+    background: linear-gradient(155deg, #1a1560 0%, #0D0D14 75%);
   }
 }
-
-/* IBM Plex Sans + Mono */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;600;700;800&display=swap');

@@ -14,15 +14,11 @@ import { DetailPage } from './pages/DetailPage';
 import { TaskPage } from './pages/TaskPage';
 import { EditorPage } from './pages/EditorPage';
 
-// Editor state lives here to pass questId down
 function AppInner() {
-  const { page, navigate, setCurrentUser, showToast } = useApp();
+  const { page, navigate, setCurrentUser } = useApp();
   const { setQuestId, setDetailState } = useQuestDetail();
 
-  // Task sub-page state
   const [taskNav, setTaskNav] = useState<{ taskId: string; taskIndex: number } | null>(null);
-
-  // Editor state
   const [editorQuestId, setEditorQuestId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,27 +37,30 @@ function AppInner() {
     navigate('editor');
   };
 
-  const backFromTask = () => {
-    navigate('detail');
-  };
-
-  const PAGE_TITLE: Record<string, string> = {
-    home:     'Funly',
-    myquests: 'My Quests',
-    profile:  'Profile',
-    admin:    'Admin',
-    detail:   '',
-    editor:   '',
-    task:     '',
-  };
-
   const showHeader = !['detail', 'editor', 'task'].includes(page);
 
+  const PAGE_TITLE: Record<string, string> = {
+    home: 'Funly',
+    myquests: 'My Quests',
+    profile: 'Profile',
+    admin: 'Admin',
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-100">
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-24 bg-purple-100">
+    /* Outer: full dark bg */
+    <div className="min-h-screen" style={{ background: '#0D0D14', color: '#e8e0ff' }}>
+      <div className="max-w-lg mx-auto px-4 pt-4 pb-28">
         {showHeader && PAGE_TITLE[page] && (
-          <h1 className="font-black text-[22px] text-purple-800 mb-5">{PAGE_TITLE[page]}</h1>
+          <h1
+            className="font-black mb-5"
+            style={{ fontSize: 22, letterSpacing: '-0.5px', color: '#fff' }}
+          >
+            {page === 'home' ? (
+              <>fun<span style={{ color: '#7B6EF6' }}>ly</span></>
+            ) : (
+              PAGE_TITLE[page]
+            )}
+          </h1>
         )}
 
         {page === 'home'     && <HomePage />}
@@ -73,10 +72,10 @@ function AppInner() {
           <TaskPage
             taskId={taskNav.taskId}
             taskIndex={taskNav.taskIndex}
-            onBack={backFromTask}
+            onBack={() => navigate('detail')}
           />
         )}
-        {page === 'editor'   && (
+        {page === 'editor' && (
           <EditorPage
             questId={editorQuestId}
             onBack={() => navigate('admin')}

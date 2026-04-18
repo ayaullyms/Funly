@@ -2,9 +2,9 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 
 const NAV_ITEMS = [
-  { id: 'home',     label: 'Quests' },
-  { id: 'myquests', label: 'My Quests' },
-  { id: 'profile',  label: 'Profile' },
+  { id: 'home',     label: 'Quests'   },
+  { id: 'myquests', label: 'My'       },
+  { id: 'profile',  label: 'Profile'  },
 ] as const;
 
 export function BottomNav() {
@@ -14,23 +14,44 @@ export function BottomNav() {
     ? [...NAV_ITEMS, { id: 'admin' as const, label: 'Admin' }]
     : NAV_ITEMS;
 
-  // Hide nav on sub-pages
-  if (page === 'detail' || page === 'editor' || page === 'task') return null;
+  if (['detail', 'editor', 'task'].includes(page)) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-50 backdrop-blur border-t border-purple-100">
-      <div className="flex max-w-lg mx-auto">
+    <nav style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
+      background: '#0D0D14',
+      borderTop: '0.5px solid #1e1e32',
+    }}>
+      <div style={{
+        display: 'flex', maxWidth: 512, margin: '0 auto',
+        /* safe area for iOS home indicator */
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}>
         {items.map(item => {
           const isActive = page === item.id;
           return (
             <button
               key={item.id}
               onClick={() => navigate(item.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-[11px] font-semibold transition-colors ${
-                isActive ? 'text-purple-400' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
+              style={{
+                flex: 1, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                padding: '8px 0 10px',
+                background: 'none', border: 'none', cursor: 'pointer',
+                gap: 4,
+                color: isActive ? '#7B6EF6' : '#44445a',
+                fontFamily: 'IBM Plex Sans, sans-serif',
+                fontSize: 10, fontWeight: 600,
+                transition: 'color 0.15s',
+              }}
             >
-              <div className={`w-1 h-1 rounded-full mb-0.5 transition-all ${isActive ? 'bg-purple-400 scale-125' : 'bg-transparent'}`} />
+              {/* active dot */}
+              <div style={{
+                width: 4, height: 4, borderRadius: '50%',
+                background: isActive ? '#7B6EF6' : 'transparent',
+                transition: 'background 0.15s',
+                marginBottom: 1,
+              }} />
               {item.label}
             </button>
           );

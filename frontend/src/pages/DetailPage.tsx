@@ -1,5 +1,3 @@
-// pages/DetailPage.tsx
-
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { Quest, Task, LeaderboardData } from '../types';
@@ -41,16 +39,7 @@ export function DetailPage({ onOpenTask }: Props) {
     if (detailState) { setLoading(false); return; }
     setLoading(true);
     Promise.all([api.getQuest(questId), api.getLeaderboard(questId)])
-      .then(([qd, lb]) => {
-        setDetailState({
-          questData: qd,
-          lbData: {
-            leaderboard: lb.leaderboard,
-            myPosition: lb.myPosition,
-            totalParticipants: lb.totalParticipants,
-          },
-        });
-      })
+      .then(([qd, lb]) => setDetailState({ questData: qd, lbData: lb }))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, [questId]);
@@ -61,54 +50,59 @@ export function DetailPage({ onOpenTask }: Props) {
       await api.joinQuest(questId);
       showToast('Joined!');
       const [qd, lb] = await Promise.all([api.getQuest(questId), api.getLeaderboard(questId)]);
-      setDetailState({ questData: qd, lbData: { leaderboard: lb.leaderboard, myPosition: lb.myPosition, totalParticipants: lb.totalParticipants } });
+      setDetailState({ questData: qd, lbData: lb });
     } catch (e: any) { showToast(e.message, 'error'); }
   };
 
   if (loading) return <SpinnerPage />;
-  if (error || !detailState) return <p className="text-red-400 text-sm py-8 text-center">{error || 'Failed to load'}</p>;
+  if (error || !detailState) return <p style={{ color: C.red, textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>{error || 'Failed to load'}</p>;
 
   const { questData: { quest: q, tasks }, lbData } = detailState;
 
   return (
     <div className="flex flex-col gap-4 pb-2">
       {/* Hero */}
-      <div className="bg-white border border-purple-800 rounded-2xl p-4 mb-4">
-        <BackButton onClick={() => navigate('home')} label="Back" />
+      <div style={{
+        background: `linear-gradient(155deg, #1a1560 0%, ${C.bg} 75%)`,
+        borderRadius: 18, overflow: 'hidden',
+        border: `0.5px solid ${C.border}`,
+      }}>
+        <div style={{ padding: '12px 14px 0' }}>
+          {/* back */}
+          <button onClick={() => navigate('home')} style={backBtnStyle}>← Back</button>
 
-        <div className="flex justify-between items-start gap-3 mt-3 mb-2">
-          <h1 className="font-black text-[20px] text-purple-800 leading-tight flex-1">{q.title}</h1>
-          <Badge status={q.status} />
-        </div>
-
-        {q.rewardDescription && (
-          <div className="text-amber-400 font-bold font-mono text-[13px] mb-3">{q.rewardDescription}</div>
-        )}
-
-        <div className="flex gap-4 text-[12px] text-zinc-500 mb-4 flex-wrap">
-          <span>{q.participantsCount || 0} participants</span>
-          {q.endDate && <span>Ends {fmtDate(q.endDate)}</span>}
-        </div>
-
-        {/* My score bar */}
-        {q.isJoined && (
-          <div className="flex gap-4 bg-purple-100 border border-purple-800 rounded-xl p-3 mb-4">
-            <ScoreItem value={q.myScore || 0} label="Score" />
-            <ScoreItem value={q.myRank ? '#' + q.myRank : '—'} label="Rank" />
-            <ScoreItem
-              value={`${q.myCompletedTasks || 0}/${q.totalTasks || 0}`}
-              label="Tasks"
-              color={q.isQuestCompleted ? 'text-emerald-400' : undefined}
-            />
-            {q.iWon && <div className="flex items-center text-amber-400 font-bold text-sm ml-auto">Winner</div>}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', margin: '10px 0 4px' }}>
+            <h1 style={{ fontWeight: 800, fontSize: 18, color: '#fff', lineHeight: 1.3, flex: 1, paddingRight: 8 }}>{q.title}</h1>
+            <StatusBadge status={q.status} />
           </div>
-        )}
 
-        {q.isQuestCompleted && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-emerald-400 font-bold text-sm text-center mb-4">
-            You completed this quest!
-          </div>
-        )}
+          {q.rewardDescription && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#a8a0ff', fontWeight: 600, marginBottom: 10 }}>
+              <TonIcon /> {q.rewardDescription} · {q.participantsCount || 0} participants
+            </div>
+          )}
+
+          {/* stats row */}
+          {q.isJoined && (
+            <div style={{
+              display: 'flex', borderTop: `0.5px solid ${C.border}`,
+              margin: '0 -14px',
+            }}>
+              {[
+                { v: q.myRank ? '#' + q.myRank : '—', l: 'Rank' },
+                { v: q.myScore || 0,                  l: 'Points' },
+                { v: `${q.myCompletedTasks||0}/${q.totalTasks||0}`, l: 'Tasks' },
+              ].map((s, i) => (
+                <div key={i} style={{
+                  flex: 1, textAlign: 'center', padding: '10px 0',
+                  borderRight: i < 2 ? `0.5px solid ${C.border}` : 'none',
+                }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>{s.v}</div>
+                  <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {q.status === 'active' && !q.isJoined && (
             <button onClick={joinQuest} style={primaryBtnStyle}>Join Quest</button>
@@ -129,134 +123,89 @@ export function DetailPage({ onOpenTask }: Props) {
       </div>
 
       {/* Tab content */}
-      <div className="flex flex-col gap-3">
-        {activeTab === 'overview' && <OverviewTab quest={q} />}
-        {activeTab === 'tasks' && <TasksTab tasks={tasks} quest={q} onOpenTask={onOpenTask} />}
-        {activeTab === 'leaderboard' && <LeaderboardTab lbData={lbData} />}
-        {activeTab === 'rules' && <RulesTab quest={q} />}
-      </div>
+      {tab === 'Info'  && <InfoTab quest={q} />}
+      {tab === 'Tasks' && <TasksTab tasks={tasks} quest={q} onOpenTask={onOpenTask} />}
+      {tab === 'Board' && <BoardTab lbData={lbData} />}
+      {tab === 'Rules' && <RulesTab quest={q} />}
     </div>
   );
 }
 
-function ScoreItem({ value, label, color }: { value: React.ReactNode; label: string; color?: string }) {
-  return (
-    <div className="text-center">
-      <div className={`font-mono text-lg font-black ${color || 'text-purple-800'}`}>{value}</div>
-      <div className="text-[10px] font-mono uppercase tracking-wide text-purple-800">{label}</div>
-    </div>
-  );
-}
-
-// ── Overview Tab ──────────────────────────────
-function OverviewTab({ quest: q }: { quest: Quest }) {
+/* ── Info Tab ── */
+function InfoTab({ quest: q }: { quest: Quest }) {
   return (
     <div className="flex flex-col gap-3">
       {q.fullDescription && (
         <p style={{ fontSize: 13, color: '#888', lineHeight: 1.7 }}>{q.fullDescription}</p>
       )}
       {(q.startDate || q.endDate) && (
-        <div className="grid grid-cols-2 gap-2.5">
-          {q.startDate && (
-            <Card className="p-3.5">
-              <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500 mb-1">Start</div>
-              <div className="font-bold text-purple-800">{fmtDate(q.startDate)}</div>
-            </Card>
-          )}
-          {q.endDate && (
-            <Card className="p-3.5">
-              <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500 mb-1">End</div>
-              <div className="font-bold text-purple-800">{fmtDate(q.endDate)}</div>
-            </Card>
-          )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          {q.startDate && <InfoCell label="START" value={fmtDate(q.startDate)} />}
+          {q.endDate   && <InfoCell label="END"   value={fmtDate(q.endDate)} />}
+        </div>
+      )}
+      {q.rewardDescription && (
+        <div style={{ background: 'rgba(123,110,246,0.06)', border: '0.5px solid rgba(123,110,246,0.25)', borderRadius: 10, padding: '10px 13px' }}>
+          <div style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: 'IBM Plex Mono, monospace' }}>Reward</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <TonIcon />
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#7B6EF6' }}>{q.rewardDescription}</span>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-// ── Tasks Tab ─────────────────────────────────
-function TasksTab({ tasks, quest: q, onOpenTask }: { tasks: Task[]; quest: Quest; onOpenTask: (id: string, idx: number) => void }) {
-  if (!q.isJoined && q.status === 'active') {
-    return (
-      <div className="flex flex-col items-center py-12 gap-2 text-zinc-500">
-        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-lg mb-2">
-          <span className="text-zinc-600">L</span>
-        </div>
-        <p className="text-sm">Join the quest to unlock tasks</p>
-      </div>
-    );
-  }
-  if (!tasks.length) return <p className="text-zinc-500 text-sm py-8 text-center">No tasks yet</p>;
+function InfoCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: '#13131f', border: '0.5px solid #1e1e32', borderRadius: 9, padding: 10 }}>
+      <div style={{ fontSize: 8, color: '#44445a', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3, fontFamily: 'IBM Plex Mono, monospace' }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#ccc' }}>{value}</div>
+    </div>
+  );
+}
 
-  const done = tasks.filter(t => t.myAnswer != null).length;
-  const total = tasks.length;
+/* ── Tasks Tab ── */
+function TasksTab({ tasks, quest: q, onOpenTask }: { tasks: Task[]; quest: Quest; onOpenTask: (id: string, i: number) => void }) {
+  if (!q.isJoined && q.status === 'active') {
+    return <p style={{ color: '#555', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Join the quest to unlock tasks</p>;
+  }
+  if (!tasks.length) return <p style={{ color: '#555', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>No tasks yet</p>;
 
   return (
-    <div className="flex flex-col gap-3">
-      {q.isJoined && (
-        <div>
-          <div className="flex justify-between text-[12px] text-zinc-500 mb-2">
-            <span>Progress</span>
-            <span className={`font-mono font-bold ${done === total && total > 0 ? 'text-emerald-400' : 'text-zinc-100'}`}>
-              {done} / {total} done
+    <div style={{ background: '#13131f', border: '0.5px solid #1e1e32', borderRadius: 14, overflow: 'hidden' }}>
+      {tasks.map((t, i) => {
+        const submitted = t.myAnswer != null;
+        let numBg = '#1a1a2a', numColor = '#44445a', numText: string = String(i + 1);
+        if (submitted && t.myAnswerCorrect)  { numBg = 'rgba(74,222,128,0.15)'; numColor = '#4ade80'; numText = '✓'; }
+        if (submitted && !t.myAnswerCorrect) { numBg = 'rgba(248,113,113,0.12)'; numColor = '#f87171'; numText = '✗'; }
+
+        return (
+          <div
+            key={t.id}
+            onClick={() => (q.isJoined && q.status === 'active') && onOpenTask(t.id, i)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+              borderBottom: i < tasks.length - 1 ? '0.5px solid #1e1e32' : 'none',
+              cursor: q.isJoined ? 'pointer' : 'default',
+            }}
+          >
+            <div style={{
+              width: 26, height: 26, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 10, fontWeight: 700, flexShrink: 0,
+              background: numBg, color: numColor,
+              border: submitted ? `0.5px solid ${numColor}40` : '0.5px solid #2a2a3a',
+            }}>{numText}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#ccc' }}>{t.title}</div>
+            </div>
+            <span style={{ fontSize: 11, color: '#7B6EF6', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700 }}>
+              {submitted ? (t.myAnswerCorrect ? `+${t.myPoints}` : '0') : `+${t.points}`}
             </span>
           </div>
-          <ProgressBar value={done} max={total} />
-        </div>
-      )}
-
-      {tasks.map((t, i) => (
-        <TaskListItem
-          key={t.id}
-          task={t}
-          index={i}
-          quest={q}
-          onOpen={() => (t.myAnswer != null || (q.isJoined && q.status === 'active')) && onOpenTask(t.id, i)}
-        />
-      ))}
-    </div>
-  );
-}
-
-function TaskListItem({ task: t, index: i, quest: q, onOpen }: { task: Task; index: number; quest: Quest; onOpen: () => void }) {
-  const submitted = t.myAnswer != null;
-  const canInteract = submitted || (q.isJoined && q.status === 'active' && !submitted);
-
-  let statusClass = 'bg-zinc-700 text-zinc-400';
-  let statusText: React.ReactNode = String(i + 1);
-  if (submitted) {
-    statusClass = t.myAnswerCorrect ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30';
-    statusText = t.myAnswerCorrect ? '✓' : '✗';
-  }
-
-  return (
-    <div
-      className={`flex items-center gap-3 bg-white border-purple-800 rounded-2xl p-4 transition-all duration-150 ${
-        canInteract ? 'cursor-pointer hover:border-zinc-600 active:scale-[0.99] border-zinc-800' : 'border-zinc-800'
-      } ${submitted ? 'opacity-80' : ''}`}
-      onClick={onOpen}
-    >
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 ${statusClass}`}>
-        {statusText}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-bold text-[14px] text-purple-800">{t.title}</div>
-        {t.description && (
-          <div className="text-zinc-500 text-[12px] mt-0.5 truncate">{t.description}</div>
-        )}
-      </div>
-      <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-        <span className="font-mono text-emerald-400 text-[13px] font-bold">+{t.points}pts</span>
-        {submitted && (
-          <span className={`text-[11px] ${t.myAnswerCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
-            {t.myAnswerCorrect ? `+${t.myPoints} pts` : '0 pts'}
-          </span>
-        )}
-        {!submitted && q.status === 'active' && q.isJoined && (
-          <span className="text-[11px] text-zinc-500">Tap</span>
-        )}
-      </div>
+        );
+      })}
     </div>
   );
 }
@@ -264,52 +213,32 @@ function TaskListItem({ task: t, index: i, quest: q, onOpen }: { task: Task; ind
 /* ── Leaderboard Tab ── */
 function BoardTab({ lbData }: { lbData: LeaderboardData }) {
   const { leaderboard: lb, myPosition, totalParticipants } = lbData;
-  if (!lb.length) return <p className="text-zinc-500 text-sm py-8 text-center">No participants yet</p>;
+  if (!lb.length) return <p style={{ color: '#555', textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>No participants yet</p>;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {myPosition && (
-        <div className="bg-white border border-purple-800 rounded-2xl p-4 mb-1">
-          <div className="flex justify-between items-center mb-1">
-            <span className="font-bold text-purple-800">Your position</span>
-            <span className="text-purple-400 font-mono text-xl font-black">#{myPosition.rank}</span>
-          </div>
-          <div className="flex justify-between text-[12px] text-zinc-500">
-            <span>out of {totalParticipants} participants</span>
-            <span className="font-mono font-bold text-purple-400">{myPosition.score} pts</span>
-          </div>
-          {!myPosition.inTop50 && (
-            <p className="text-[11px] text-purple-800 mt-2">Not in top 50 yet — answer more tasks to climb up</p>
-          )}
+        <div style={{ background: 'rgba(123,110,246,0.1)', border: '0.5px solid rgba(123,110,246,0.35)', borderRadius: 12, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#c8c0ff' }}>Your position</span>
+          <span style={{ fontSize: 20, fontWeight: 800, color: '#7B6EF6', fontFamily: 'IBM Plex Mono, monospace' }}>#{myPosition.rank}</span>
         </div>
       )}
-
-      <div className="flex flex-col divide-y divide-zinc-800 bg-white border border-purple-800 rounded-2xl overflow-hidden">
+      <div style={{ background: '#13131f', border: '0.5px solid #1e1e32', borderRadius: 14, overflow: 'hidden' }}>
         {lb.map((e, i) => {
           const r = i + 1;
-          const medal = r === 1 ? '01' : r === 2 ? '02' : r === 3 ? '03' : null;
+          const rankColor = r <= 3 ? '#fbbf24' : '#666';
           return (
-            <div
-              key={e.userId}
-              className={`flex items-center gap-3 px-4 py-3 ${e.isMe ? 'bg-purple-500/5' : ''}`}
-            >
-              <div className={`w-8 text-center font-mono font-black text-[13px] ${
-                r <= 3 ? 'text-amber-400' : 'text-zinc-500'
-              }`}>
-                {medal ? `#${medal}` : `#${r}`}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[14px] font-semibold text-purple-800 truncate">
-                  {e.firstName || e.username || 'Anonymous'}
-                </span>
-                {e.username && <span className="text-zinc-500 text-[12px] ml-1">@{e.username}</span>}
-                {e.isMe && <span className="text-[11px] text-emerald-400 font-bold ml-1.5">you</span>}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[13px] font-bold text-purple-800">{e.score}</span>
-                <span className="text-[10px] text-zinc-500">pts</span>
-                {e.isWinner && <span className="text-amber-400 text-[12px]">W</span>}
-              </div>
+            <div key={e.userId} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
+              borderBottom: i < lb.length - 1 ? '0.5px solid #1e1e32' : 'none',
+              background: e.isMe ? 'rgba(123,110,246,0.05)' : 'transparent',
+            }}>
+              <span style={{ width: 22, fontSize: 12, fontWeight: 700, color: rankColor, fontFamily: 'IBM Plex Mono, monospace' }}>#{r}</span>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: e.isMe ? '#9d90f8' : '#ddd' }}>
+                {e.firstName || e.username || 'Anonymous'}
+                {e.isMe && <span style={{ fontSize: 9, color: '#7B6EF6', marginLeft: 5 }}>← you</span>}
+              </span>
+              <span style={{ fontSize: 11, color: '#7B6EF6', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700 }}>{e.score} pts</span>
             </div>
           );
         })}
@@ -320,6 +249,42 @@ function BoardTab({ lbData }: { lbData: LeaderboardData }) {
 
 /* ── Rules Tab ── */
 function RulesTab({ quest: q }: { quest: Quest }) {
-  if (!q.rules) return <p className="text-zinc-500 text-sm py-8 text-center">No rules</p>;
-  return <p className="text-zinc-300 text-[15px] leading-relaxed whitespace-pre-wrap">{q.rules}</p>;
+  if (!q.rules) return <p style={{ color: '#555', textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>No rules</p>;
+  return <p style={{ fontSize: 13, color: '#888', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{q.rules}</p>;
 }
+
+/* ── Shared atoms ── */
+function TonIcon() {
+  return (
+    <span style={{
+      width: 14, height: 14, background: '#0098EA', borderRadius: '50%',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 7, fontWeight: 700, color: '#fff', flexShrink: 0,
+    }}>T</span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { color: string; bg: string; border: string }> = {
+    active:    { color: '#9d90f8', bg: 'rgba(123,110,246,0.15)', border: 'rgba(123,110,246,0.35)' },
+    draft:     { color: '#555',    bg: 'rgba(100,100,120,0.2)',   border: '#2a2a3a' },
+    completed: { color: '#4ade80', bg: 'rgba(74,222,128,0.1)',    border: 'rgba(74,222,128,0.25)' },
+  };
+  const s = map[status] || map.draft;
+  return (
+    <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: s.color, background: s.bg, border: `0.5px solid ${s.border}`, whiteSpace: 'nowrap' }}>
+      {status}
+    </span>
+  );
+}
+
+const backBtnStyle: React.CSSProperties = {
+  fontSize: 11, color: '#7B6EF6', background: 'none', border: 'none', cursor: 'pointer',
+  padding: 0, fontFamily: 'IBM Plex Sans, sans-serif',
+};
+
+const primaryBtnStyle: React.CSSProperties = {
+  width: '100%', background: '#7B6EF6', color: '#fff', fontSize: 13, fontWeight: 700,
+  padding: '10px 14px', borderRadius: 9, border: 'none', cursor: 'pointer',
+  margin: '10px 0', fontFamily: 'IBM Plex Sans, sans-serif',
+};

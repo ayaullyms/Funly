@@ -32,6 +32,7 @@ export interface Quest {
   myScore?: number;
   myRank?: number;
   myCompletedTasks?: number;
+  myCorrectTasks?: number;
   isQuestCompleted?: boolean;
   myStatus?: string;
   iWon?: boolean;

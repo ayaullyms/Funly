@@ -172,22 +172,18 @@ async function getParticipants(req, res) {
 async function completeQuest(req, res) {
   try {
     const { id } = req.params;
-    const { winnersCount = 3, rewardAmountPerWinner = 0, requireAllTasks = true } = req.body;
+    const { winnersCount = 3, rewardAmountPerWinner = 0 } = req.body;
+
     const totalTasks = await prisma.task.count({ where: { questId: id } });
-    if (totalTasks === 0 && requireAllTasks) {
-      return res.status(400).json({
-        error: 'Quest has no tasks. Pass requireAllTasks: false to complete anyway.',
-      });
+    if (totalTasks === 0) {
+      return res.status(400).json({ error: 'Quest has no tasks' });
     }
-
-    const whereClause = {
-      questId: id,
-      ...(requireAllTasks && totalTasks > 0 ? { status: 'completed' } : {}),
-    };
-
     const topParticipants = await prisma.questParticipant.findMany({
-      where: whereClause,
-      orderBy: { score: 'desc' },
+      where: { 
+        questId: id,
+        score: { gt: 0 }, 
+      },
+      orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
       take: winnersCount,
       include: {
         user: { select: { firstName: true, username: true } },
@@ -196,15 +192,13 @@ async function completeQuest(req, res) {
 
     if (topParticipants.length === 0) {
       return res.status(400).json({
-        error: requireAllTasks
-          ? 'No participants have completed all tasks yet'
-          : 'No participants found',
+        error: 'No participants with score > 0 found',
       });
     }
 
     await prisma.$transaction([
       prisma.quest.update({ where: { id }, data: { status: 'completed' } }),
-      
+
       ...topParticipants.flatMap(p => [
         prisma.questParticipant.update({
           where: { id: p.id },
@@ -226,7 +220,11 @@ async function completeQuest(req, res) {
       ]),
     ]);
 
-    res.json({ success: true, winners: topParticipants.length,winnerNames: topParticipants.map(p => p.user.firstName || p.user.username),});
+    res.json({
+      success: true,
+      winners: topParticipants.length,
+      winnerNames: topParticipants.map(p => p.user.firstName || p.user.username),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

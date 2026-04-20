@@ -1,4 +1,5 @@
 //controller/taskcontroller.js
+
 const prisma = require('../config/prisma');
 
 // Internal: recalculate ranks for all participants in a quest
@@ -8,6 +9,7 @@ async function updateRanks(questId) {
     orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
     select: { id: true },
   });
+
   await prisma.$transaction(
     participants.map((p, i) =>
       prisma.questParticipant.update({
@@ -16,23 +18,6 @@ async function updateRanks(questId) {
       })
     )
   );
-}
-
-// Internal: check if user completed all tasks and mark quest as completed
-async function checkAndCompleteQuest(questId, userId) {
-  const totalTasks = await prisma.task.count({ where: { questId } });
-  if (totalTasks === 0) return;
- 
-  const completedTasks = await prisma.taskSubmission.count({
-    where: { questId, userId },
-  });
- 
-  if (completedTasks >= totalTasks) {
-    await prisma.questParticipant.update({
-      where: { questId_userId: { questId, userId } },
-      data: { status: 'completed', completedAt: new Date() },
-    });
-  }
 }
 
 // POST /api/quests/:questId/tasks/:taskId/submit
@@ -70,43 +55,60 @@ async function submitTask(req, res) {
     if (existing) return res.status(409).json({ error: 'Already submitted' });
 
     // Grade answer
-    let isCorrect = false;
-    let pointsAwarded = 0;
-    isCorrect = task.correctAnswer?.toLowerCase().trim() === answer.toLowerCase().trim();
-    pointsAwarded = isCorrect ? task.points : 0;
-      
-    // Save submission + update score in one transaction
+    const isCorrect = task.correctAnswer?.toLowerCase().trim() === answer.toLowerCase().trim();
+    const pointsAwarded = isCorrect ? task.points : 0;
+
+    // Check if this submission completes the quest for the user
+    const totalTasks = await prisma.task.count({ where: { questId } });
+    const completedCount = await prisma.taskSubmission.count({
+      where: { questId, userId: req.user.id },
+    });
+    // +1 because current submission isn't saved yet
+    const isQuestCompleted = completedCount + 1 >= totalTasks;
+
+    // Save submission + update score + maybe mark quest completed — all in one transaction
     const [submission] = await prisma.$transaction([
       prisma.taskSubmission.create({
-        data: { taskId, userId: req.user.id, questId, submittedAnswer: answer, isCorrect, pointsAwarded },
+        data: {
+          taskId,
+          userId: req.user.id,
+          questId,
+          submittedAnswer: answer,
+          isCorrect,
+          pointsAwarded,
+        },
       }),
       prisma.questParticipant.update({
         where: { questId_userId: { questId, userId: req.user.id } },
-        data: { score: { increment: pointsAwarded }, status: 'in_progress' },
+        data: {
+          score: { increment: pointsAwarded },
+          status: isQuestCompleted ? 'completed' : 'in_progress',
+        },
       }),
       ...(isCorrect
-        ? [prisma.user.update({
-            where: { id: req.user.id },
-            data: { totalTasksCompleted: { increment: 1 } },
-          })]
+        ? [
+            prisma.user.update({
+              where: { id: req.user.id },
+              data: { totalTasksCompleted: { increment: 1 } },
+            }),
+          ]
         : []),
     ]);
 
     await updateRanks(questId);
-    await checkAndCompleteQuest(questId, req.user.id);
 
     const updatedParticipant = await prisma.questParticipant.findUnique({
       where: { questId_userId: { questId, userId: req.user.id } },
-      select: { status: true, score: true, rank: true },
+      select: { score: true, rank: true, status: true },
     });
 
     res.json({
       submission,
       isCorrect,
       pointsAwarded,
-      questCompleted: updatedParticipant?.status === 'completed',
       currentScore: updatedParticipant?.score,
       currentRank: updatedParticipant?.rank,
+      isQuestCompleted: updatedParticipant?.status === 'completed',
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

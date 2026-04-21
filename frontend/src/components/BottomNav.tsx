@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 
 const NAV_ITEMS = [
   { id: 'home',     label: 'Quests'   },
-  { id: 'myquests', label: 'My'       },
+  { id: 'myquests', label: 'My quests'       },
   { id: 'profile',  label: 'Profile'  },
 ] as const;
 

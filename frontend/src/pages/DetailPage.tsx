@@ -59,6 +59,8 @@ export function DetailPage({ onOpenTask }: Props) {
 
   const { questData: { quest: q, tasks }, lbData } = detailState;
 
+  const correctCount = tasks.filter(t => t.myAnswerCorrect).length;
+
   return (
     <div className="flex flex-col gap-4 pb-2">
       {/* Hero */}
@@ -91,7 +93,7 @@ export function DetailPage({ onOpenTask }: Props) {
               {[
                 { v: q.myRank ? '#' + q.myRank : '—', l: 'Rank' },
                 { v: q.myScore || 0,                  l: 'Points' },
-                { v: `${q.myCompletedTasks||0}/${q.totalTasks||0}`, l: 'Tasks' },
+                { v: `${correctCount}/${q.totalTasks || 0}`, l: 'Tasks' },
               ].map((s, i) => (
                 <div key={i} style={{
                   flex: 1, textAlign: 'center', padding: '10px 0',
@@ -201,7 +203,7 @@ function TasksTab({ tasks, quest: q, onOpenTask }: { tasks: Task[]; quest: Quest
               <div style={{ fontSize: 12, fontWeight: 600, color: '#ccc' }}>{t.title}</div>
             </div>
             <span style={{ fontSize: 11, color: '#7B6EF6', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700 }}>
-              {submitted ? (t.myAnswerCorrect ? `+${t.myPoints}` : '0') : `+${t.points}`}
+              {submitted? (t.myAnswerCorrect ? `+${t.myPoints}` : '0'): `+${t.points}`}
             </span>
           </div>
         );

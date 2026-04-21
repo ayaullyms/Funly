@@ -28,13 +28,11 @@ async function submitTask(req, res) {
 
     if (!answer?.trim()) return res.status(400).json({ error: 'Answer is required' });
 
-    // Must be a participant
     const participant = await prisma.questParticipant.findUnique({
       where: { questId_userId: { questId, userId: req.user.id } },
     });
     if (!participant) return res.status(403).json({ error: 'Not a participant' });
 
-    // Get task
     const task = await prisma.task.findFirst({
       where: { id: taskId, questId },
       include: { quest: { select: { endDate: true, status: true } } },
@@ -48,25 +46,21 @@ async function submitTask(req, res) {
       return res.status(400).json({ error: 'Quest has ended' });
     }
 
-    // Duplicate check
     const existing = await prisma.taskSubmission.findUnique({
       where: { taskId_userId: { taskId, userId: req.user.id } },
     });
     if (existing) return res.status(409).json({ error: 'Already submitted' });
 
-    // Grade answer
     const isCorrect = task.correctAnswer?.toLowerCase().trim() === answer.toLowerCase().trim();
     const pointsAwarded = isCorrect ? task.points : 0;
 
-    // Check if this submission completes the quest for the user
     const totalTasks = await prisma.task.count({ where: { questId } });
     const completedCount = await prisma.taskSubmission.count({
-      where: { questId, userId: req.user.id },
+      where: { questId, userId: req.user.id, isCorrect: true },
     });
-    // +1 because current submission isn't saved yet
-    const isQuestCompleted = completedCount + 1 >= totalTasks;
 
-    // Save submission + update score + maybe mark quest completed — all in one transaction
+    const isQuestCompleted = isCorrect && (completedCount + 1 >= totalTasks);
+
     const [submission] = await prisma.$transaction([
       prisma.taskSubmission.create({
         data: {

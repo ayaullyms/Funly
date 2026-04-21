@@ -174,31 +174,28 @@ async function completeQuest(req, res) {
     const { id } = req.params;
     const { winnersCount = 3, rewardAmountPerWinner = 0 } = req.body;
 
-    const totalTasks = await prisma.task.count({ where: { questId: id } });
-    if (totalTasks === 0) {
-      return res.status(400).json({ error: 'Quest has no tasks' });
+    const quest = await prisma.quest.findUnique({ where: { id }, select: { status: true } });
+    if (!quest) return res.status(404).json({ error: 'Quest not found' });
+    if (quest.status === 'completed') {
+      return res.status(400).json({ error: 'Quest is already completed' });
     }
+
+    const totalTasks = await prisma.task.count({ where: { questId: id } });
+    if (totalTasks === 0) return res.status(400).json({ error: 'Quest has no tasks' });
+
     const topParticipants = await prisma.questParticipant.findMany({
-      where: { 
-        questId: id,
-        score: { gt: 0 }, 
-      },
+      where: { questId: id, score: { gt: 0 } },
       orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
       take: winnersCount,
-      include: {
-        user: { select: { firstName: true, username: true } },
-      },
+      include: { user: { select: { firstName: true, username: true } } },
     });
 
     if (topParticipants.length === 0) {
-      return res.status(400).json({
-        error: 'No participants with score > 0 found',
-      });
+      return res.status(400).json({ error: 'No participants with score > 0 found' });
     }
 
     await prisma.$transaction([
       prisma.quest.update({ where: { id }, data: { status: 'completed' } }),
-
       ...topParticipants.flatMap(p => [
         prisma.questParticipant.update({
           where: { id: p.id },
@@ -236,10 +233,16 @@ async function distributeReward(req, res) {
     const { rewardId } = req.params;
     const { transactionHash } = req.body;
 
-    const reward = await prisma.reward.update({
-      where: { id: rewardId },
+    const { count } = await prisma.reward.updateMany({
+      where: { id: rewardId, status: 'pending' },
       data: { status: 'distributed', transactionHash, distributedAt: new Date() },
     });
+
+    if (count === 0) {
+      return res.status(400).json({ error: 'Reward already distributed or not found' });
+    }
+
+    const reward = await prisma.reward.findUnique({ where: { id: rewardId } });
 
     await prisma.$transaction([
       prisma.user.update({
@@ -254,7 +257,6 @@ async function distributeReward(req, res) {
 
     res.json({ reward: { ...reward, amount: reward.amount.toString() } });
   } catch (err) {
-    if (err.code === 'P2025') return res.status(404).json({ error: 'Reward not found' });
     res.status(500).json({ error: err.message });
   }
 }

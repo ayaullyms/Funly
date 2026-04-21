@@ -25,7 +25,6 @@ async function submitTask(req, res) {
   try {
     const { questId, taskId } = req.params;
     const { answer } = req.body;
-
     if (!answer?.trim()) return res.status(400).json({ error: 'Answer is required' });
 
     const participant = await prisma.questParticipant.findUnique({
@@ -38,18 +37,10 @@ async function submitTask(req, res) {
       include: { quest: { select: { endDate: true, status: true } } },
     });
     if (!task) return res.status(404).json({ error: 'Task not found' });
-
-    if (task.quest.status !== 'active') {
-      return res.status(400).json({ error: 'Quest is not active' });
-    }
+    if (task.quest.status !== 'active') return res.status(400).json({ error: 'Quest is not active' });
     if (task.quest.endDate && new Date() > new Date(task.quest.endDate)) {
       return res.status(400).json({ error: 'Quest has ended' });
     }
-
-    const existing = await prisma.taskSubmission.findUnique({
-      where: { taskId_userId: { taskId, userId: req.user.id } },
-    });
-    if (existing) return res.status(409).json({ error: 'Already submitted' });
 
     const isCorrect = task.correctAnswer?.toLowerCase().trim() === answer.toLowerCase().trim();
     const pointsAwarded = isCorrect ? task.points : 0;
@@ -58,7 +49,6 @@ async function submitTask(req, res) {
     const completedCount = await prisma.taskSubmission.count({
       where: { questId, userId: req.user.id, isCorrect: true },
     });
-
     const isQuestCompleted = isCorrect && (completedCount + 1 >= totalTasks);
 
     const [submission] = await prisma.$transaction([
@@ -80,12 +70,10 @@ async function submitTask(req, res) {
         },
       }),
       ...(isCorrect
-        ? [
-            prisma.user.update({
-              where: { id: req.user.id },
-              data: { totalTasksCompleted: { increment: 1 } },
-            }),
-          ]
+        ? [prisma.user.update({
+            where: { id: req.user.id },
+            data: { totalTasksCompleted: { increment: 1 } },
+          })]
         : []),
     ]);
 
@@ -105,6 +93,9 @@ async function submitTask(req, res) {
       isQuestCompleted: updatedParticipant?.status === 'completed',
     });
   } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Already submitted' });
+    }
     res.status(500).json({ error: err.message });
   }
 }

@@ -211,6 +211,10 @@ async function joinQuest(req, res) {
     const quest = await prisma.quest.findUnique({ where: { id } });
     if (!quest) return res.status(404).json({ error: 'Quest not found' });
     if (quest.status !== 'active') return res.status(400).json({ error: 'Quest is not active' });
+    
+    if (quest.endDate && new Date() > new Date(quest.endDate)) {
+      return res.status(400).json({ error: 'Quest has already ended' });
+    }
 
     const existing = await prisma.questParticipant.findUnique({
       where: { questId_userId: { questId: id, userId: req.user.id } },

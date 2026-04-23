@@ -365,3 +365,15 @@ const addBtnSt: React.CSSProperties = {
   fontSize: 11, color: '#44445a', cursor: 'pointer', background: 'transparent',
   fontFamily: 'IBM Plex Sans, sans-serif', width: '100%',
 };
+
+const backBtnSt: React.CSSProperties = {
+  background: 'transparent',
+  color: '#9d90f8',
+  fontSize: 12,
+  fontWeight: 600,
+  padding: '6px 10px',
+  borderRadius: 6,
+  border: '0.5px solid #2a2a3a',
+  cursor: 'pointer',
+  fontFamily: 'IBM Plex Sans, sans-serif',
+};

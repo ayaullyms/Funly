@@ -10,7 +10,7 @@ interface QuestDetailContextValue {
   questId: string | null;
   setQuestId: (id: string | null) => void;
   detailState: QuestDetailState | null;
-  setDetailState: (s: QuestDetailState | null) => void;
+  setDetailState: (s: QuestDetailState | null | ((prev: QuestDetailState | null) => QuestDetailState | null)) => void;
   updateTaskInCache: (taskId: string, patch: Partial<Task>) => void;
   updateQuestInCache: (patch: Partial<Quest>) => void;
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 import type { Task, Quest } from '../types';
 import { useApp } from '../context/AppContext';
-import { useQuestDetail } from '../context/QuestDetailContext';
+import { useQuestDetail, type QuestDetailState } from '../context/QuestDetailContext';
 
 interface Props { taskId: string; taskIndex: number; onBack: () => void; }
 
@@ -14,10 +14,10 @@ const C = {
 
 export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
   const { showToast } = useApp();
-  const { questId, detailState, updateTaskInCache, updateQuestInCache } = useQuestDetail();
+  const { questId, detailState, setDetailState, updateTaskInCache, updateQuestInCache } = useQuestDetail();
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [textAns, setTextAns] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,7 +26,7 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
   const quest = detailState?.questData.quest;
   const task  = tasks[currentIndex];
 
-  useEffect(() => { setSelected(null); setTextAns(''); }, [currentIndex]);
+  useEffect(() => { setSelectedIndex(null); setTextAns(''); }, [currentIndex]);
 
   if (!task || !quest) return null;
 
@@ -39,7 +39,8 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
 
   const submit = async () => {
     if (!questId) return;
-    const answer = isMulti ? selected : textAns.trim();
+    // ✅ БАГ 1 FIX: берём значение по индексу
+    const answer = isMulti ? (selectedIndex !== null ? opts[selectedIndex] : null) : textAns.trim();
     if (!answer) { showToast(isMulti ? 'Select an answer' : 'Enter your answer', 'error'); return; }
     setSubmitting(true);
     try {
@@ -47,6 +48,13 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
       updateTaskInCache(task.id, { myAnswer: answer, myAnswerCorrect: res.isCorrect, myPoints: res.pointsAwarded });
       updateQuestInCache({ myScore: res.currentScore, myRank: res.currentRank, myCompletedTasks: (quest.myCompletedTasks || 0) + 1 });
       showToast(res.isCorrect ? `Correct! +${res.pointsAwarded} pts` : 'Wrong answer', res.isCorrect ? 'success' : 'error');
+
+      api.getLeaderboard(questId).then(lb => {
+        if (detailState) {
+          setDetailState({ ...detailState, lbData: lb });
+        }
+      }).catch(() => {});
+
     } catch (e: any) { showToast(e.message, 'error'); }
     finally { setSubmitting(false); }
   };
@@ -89,9 +97,10 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
       ) : isMulti ? (
         <div className="flex flex-col gap-2">
           {opts.map((o, i) => {
-            const isSel = selected === o;
+            // ✅ БАГ 1 FIX: сравниваем по индексу
+            const isSel = selectedIndex === i;
             return (
-              <button key={i} onClick={() => setSelected(o)} style={{
+              <button key={i} onClick={() => setSelectedIndex(i)} style={{
                 display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px',
                 background: isSel ? 'rgba(123,110,246,0.06)' : C.bg2,
                 border: `0.5px solid ${isSel ? C.purple : C.border}`,
@@ -107,7 +116,7 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
               </button>
             );
           })}
-          <button onClick={submit} disabled={!selected || submitting} style={primaryBtnSt(!!selected && !submitting)}>
+          <button onClick={submit} disabled={selectedIndex === null || submitting} style={primaryBtnSt(selectedIndex !== null && !submitting)}>
             {submitting ? 'Checking...' : 'Check Answer'}
           </button>
         </div>
@@ -157,24 +166,26 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
 }
 
 function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
-  const isCorrect = task.myAnswerCorrect;
+  const isCorrect = task.myAnswerCorrect === true;
+  const isWrong = task.myAnswerCorrect === false;
   return (
     <div className="flex flex-col gap-3">
       {opts.length > 0 ? opts.map((o, i) => {
-        const isSel = o === task.myAnswer;
+        // ✅ БАГ 1 FIX: сравниваем по индексу, а не по значению
+        const isSel = i < opts.length && opts[i] === task.myAnswer && task.myAnswer != null;
         let bg = '#13131f', border = '#1e1e32';
         if (isSel && isCorrect)  { bg = 'rgba(74,222,128,0.06)';  border = 'rgba(74,222,128,0.4)'; }
-        if (isSel && !isCorrect) { bg = 'rgba(248,113,113,0.06)'; border = 'rgba(248,113,113,0.35)'; }
-        const circleColor = isSel ? (isCorrect ? '#4ade80' : '#f87171') : '#2a2a3a';
+        if (isSel && isWrong)    { bg = 'rgba(248,113,113,0.06)'; border = 'rgba(248,113,113,0.35)'; }
+        const circleColor = isSel ? (isCorrect ? '#4ade80' : isWrong ? '#f87171' : '#2a2a3a') : '#2a2a3a';
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', background: bg, border: `0.5px solid ${border}`, borderRadius: 10 }}>
             <span style={{
               width: 18, height: 18, borderRadius: '50%', border: `1px solid ${circleColor}`,
               background: isSel ? `${circleColor}40` : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, color: circleColor,
             }}>
-              {isSel && (isCorrect ? '✓' : '✗')}
+              {isSel && (isCorrect ? '✓' : isWrong ? '✗' : null)}
             </span>
-            <span style={{ fontSize: 12, color: isSel ? (isCorrect ? '#4ade80' : '#f87171') : '#bbb' }}>{o}</span>
+            <span style={{ fontSize: 12, color: isSel ? (isCorrect ? '#4ade80' : isWrong ? '#f87171' : '#bbb') : '#bbb' }}>{o}</span>
           </div>
         );
       }) : (

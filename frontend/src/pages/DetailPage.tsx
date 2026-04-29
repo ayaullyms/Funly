@@ -4,7 +4,7 @@ import type { Quest, Task, LeaderboardData } from '../types';
 import { fmtDate } from '../utils';
 import { SpinnerPage } from '../components/ui';
 import { useApp } from '../context/AppContext';
-import { useQuestDetail } from '../context/QuestDetailContext';
+import { useQuestDetail, type QuestDetailState } from '../context/QuestDetailContext';
 
 const C = {
   bg:     '#0D0D14',
@@ -43,6 +43,15 @@ export function DetailPage({ onOpenTask }: Props) {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, [questId]);
+
+  useEffect(() => {
+    if (tab !== 'Board' || !questId) return;
+    api.getLeaderboard(questId).then(lb => {
+      if (detailState) {
+        setDetailState({ ...detailState, lbData: lb });
+      }
+    }).catch(() => {});
+  }, [tab, questId, detailState, setDetailState]);
 
   const joinQuest = async () => {
     if (!questId) return;
@@ -203,7 +212,7 @@ function TasksTab({ tasks, quest: q, onOpenTask }: { tasks: Task[]; quest: Quest
               <div style={{ fontSize: 12, fontWeight: 600, color: '#ccc' }}>{t.title}</div>
             </div>
             <span style={{ fontSize: 11, color: '#7B6EF6', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700 }}>
-              {submitted? (t.myAnswerCorrect ? `+${t.myPoints}` : '0'): `+${t.points}`}
+              {submitted ? (t.myAnswerCorrect ? `+${t.myPoints}` : '0') : `+${t.points}`}
             </span>
           </div>
         );

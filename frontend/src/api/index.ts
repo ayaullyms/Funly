@@ -45,7 +45,7 @@ export const api = {
   getMe:            () => request<MeResponse>('GET', '/users/me'),
   getMyStats:       () => request<StatsResponse>('GET', '/users/me/stats'),
   getMyRewards:     () => request<RewardsResponse>('GET', '/users/me/rewards'),
-  connectWallet:    (body: { walletAddress: string }) => request<{ message: string }>('POST', '/users/me/wallet', body),
+  connectWallet:    (body: { walletAddress: string; providerName?: string }) => request<{ message: string }>('POST', '/users/me/wallet', body),
   disconnectWallet: () => request<{ message: string }>('DELETE', '/users/me/wallet'),
 
   // QUESTS

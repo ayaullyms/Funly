@@ -54,6 +54,7 @@ model User {
   photoUrl             String?  @map("photo_url")
   role                 Role     @default(user)
   walletAddress        String?  @map("wallet_address")
+  walletAddressFriendly String? @map("wallet_address_friendly")
   totalTasksCompleted  Int      @default(0) @map("total_tasks_completed")
   totalWins            Int      @default(0) @map("total_wins")
   totalRewardsAmount   Decimal  @default(0) @map("total_rewards_amount") @db.Decimal(18, 6)

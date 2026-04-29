@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { api } from '../api';
 import type { User, UserStats, Reward } from '../types';
-import { fmtDate } from '../utils';
 import { SpinnerPage } from '../components/ui';
 import { useApp } from '../context/AppContext';
 
@@ -14,12 +14,13 @@ const C = {
 
 export function ProfilePage() {
   const { showToast } = useApp();
+  const wallet = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI();
   const [user,    setUser]    = useState<User | null>(null);
   const [stats,   setStats]   = useState<UserStats | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
-  const [walletInput, setWalletInput] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -32,16 +33,26 @@ export function ProfilePage() {
 
   useEffect(() => { load(); }, []);
 
-  const connectWallet = async () => {
-    if (!walletInput.trim()) { showToast('Enter wallet address', 'error'); return; }
-    try { await api.connectWallet({ walletAddress: walletInput.trim() }); showToast('Wallet connected'); load(); }
+  const disconnectWallet = async () => {
+    try {
+      await tonConnectUI.disconnect();
+      await api.disconnectWallet();
+      showToast('Wallet disconnected');
+      load();
+    }
     catch (e: any) { showToast(e.message, 'error'); }
   };
 
-  const disconnectWallet = async () => {
-    try { await api.disconnectWallet(); showToast('Wallet disconnected'); load(); }
-    catch (e: any) { showToast(e.message, 'error'); }
-  };
+  // When TonConnect wallet connects, persist address to backend.
+  useEffect(() => {
+    if (!wallet?.account?.address) return;
+    if (!user) return;
+    if (user.walletAddress === wallet.account.address) return;
+
+    api.connectWallet({ walletAddress: wallet.account.address, providerName: 'TON Connect' })
+      .then(() => load())
+      .catch((e: any) => showToast(e.message, 'error'));
+  }, [wallet?.account?.address, user?.id]);
 
   if (loading) return <SpinnerPage />;
   if (error || !user) return <p style={{ color: C.red, textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>{error}</p>;
@@ -108,6 +119,9 @@ export function ProfilePage() {
       {/* Wallet */}
       <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
         <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, fontFamily: 'IBM Plex Mono, monospace' }}>TON Wallet</div>
+        <div style={{ marginBottom: 10 }}>
+          <TonConnectButton />
+        </div>
         {user.walletAddress ? (
           <div className="flex flex-col gap-3">
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -115,20 +129,16 @@ export function ProfilePage() {
               <span style={{ fontSize: 12, color: C.green, fontWeight: 600 }}>Connected</span>
             </div>
             <div style={{ background: '#060610', borderRadius: 7, padding: '6px 9px', fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, color: '#555', wordBreak: 'break-all' }}>
-              {user.walletAddress}
+              {user.walletAddressFriendly || user.walletAddress}
             </div>
             <button onClick={disconnectWallet} style={dangerBtnSt}>Disconnect</button>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <p style={{ fontSize: 11, color: '#555', lineHeight: 1.6 }}>Connect your wallet to receive quest rewards via smart contract</p>
-            <input
-              placeholder="Paste TON wallet address..."
-              value={walletInput}
-              onChange={e => setWalletInput(e.target.value)}
-              style={inputSt}
-            />
-            <button onClick={connectWallet} style={primaryBtnSt}>Connect TON Wallet</button>
+            <p style={{ fontSize: 11, color: '#555', lineHeight: 1.6 }}>
+              After you connect in TonConnect, we will save your wallet address automatically.
+            </p>
           </div>
         )}
       </div>
@@ -168,16 +178,6 @@ function RewardBadge({ status }: { status: string }) {
   );
 }
 
-const inputSt: React.CSSProperties = {
-  background: '#0D0D14', border: '0.5px solid #2a2a3a', borderRadius: 8,
-  padding: '9px 11px', fontSize: 12, color: '#888', outline: 'none',
-  width: '100%', fontFamily: 'IBM Plex Sans, sans-serif',
-};
-const primaryBtnSt: React.CSSProperties = {
-  background: '#7B6EF6', color: '#fff', fontSize: 12, fontWeight: 700,
-  padding: '10px 14px', borderRadius: 9, border: 'none', cursor: 'pointer',
-  fontFamily: 'IBM Plex Sans, sans-serif', width: '100%',
-};
 const dangerBtnSt: React.CSSProperties = {
   background: 'rgba(248,113,113,0.08)', color: '#f87171', fontSize: 11, fontWeight: 600,
   padding: '8px 12px', borderRadius: 8, border: '0.5px solid rgba(248,113,113,0.25)',

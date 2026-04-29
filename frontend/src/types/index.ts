@@ -12,6 +12,7 @@ export interface User {
   photoUrl?: string;
   role: UserRole;
   walletAddress?: string;
+  walletAddressFriendly?: string;
   totalRewardsAmount?: string | number;
 }
 

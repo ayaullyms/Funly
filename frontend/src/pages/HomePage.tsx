@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../api';
-import type { Quest } from '../types';
+import type { Quest, Task } from '../types';
 import { fmtDate } from '../utils';
 import { Badge, SpinnerPage, EmptyState } from '../components/ui';
 import { useApp } from '../context/AppContext';
@@ -30,11 +30,35 @@ export function HomePage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+
     try {
-      // Home должен показывать только активные квесты.
-      // Даже если backend случайно вернёт draft/completed, ниже мы ещё раз фильтруем на фронте.
+      // Home показывает только active quests.
       const d = await api.listQuests('active');
-      setQuests(d.quests || []);
+      const activeQuests: Quest[] = (d.quests || []).filter((q: Quest) => q.status === 'active');
+
+      // В listQuests backend не всегда присылает актуальный myCompletedTasks.
+      // Поэтому для joined-квестов подтягиваем детали и считаем выполненные задания по tasks.
+      const withProgress = await Promise.all(
+        activeQuests.map(async (q) => {
+          if (!q.isJoined) return q;
+
+          try {
+            const detail = await api.getQuest(q.id);
+            const tasks: Task[] = detail.tasks || [];
+            const completedTasks = tasks.filter(t => t.myAnswer != null).length;
+
+            return {
+              ...q,
+              totalTasks: detail.quest?.totalTasks ?? q.totalTasks ?? tasks.length,
+              myCompletedTasks: completedTasks,
+            } as Quest;
+          } catch {
+            return q;
+          }
+        })
+      );
+
+      setQuests(withProgress);
     } catch (e: any) {
       setError(e.message);
     } finally {

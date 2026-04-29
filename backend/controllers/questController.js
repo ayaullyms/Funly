@@ -151,27 +151,40 @@ async function getLeaderboard(req, res) {
   try {
     const { id } = req.params;
 
-    const top50 = await prisma.questParticipant.findMany({
-      where: { questId: id },
-      orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
-      take: 50,
-      include: {
-        user: {
-          select: { username: true, firstName: true, lastName: true, photoUrl: true },
+    const [top50, myEntry, totalParticipants] = await prisma.$transaction([
+      prisma.questParticipant.findMany({
+        where: { questId: id },
+        orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
+        take: 50,
+        include: {
+          user: {
+            select: {
+              username: true,
+              firstName: true,
+              lastName: true,
+              photoUrl: true,
+            },
+          },
         },
-      },
-    });
-
-    const myEntry = await prisma.questParticipant.findUnique({
-      where: { questId_userId: { questId: id, userId: req.user.id } },
-      select: { score: true, rank: true, isWinner: true, status: true, joinedAt: true },
-    });
+      }),
+      prisma.questParticipant.findUnique({
+        where: { questId_userId: { questId: id, userId: req.user.id } },
+        select: {
+          score: true,
+          rank: true,
+          isWinner: true,
+          status: true,
+          joinedAt: true,
+        },
+      }),
+      prisma.questParticipant.count({ where: { questId: id } }),
+    ]);
 
     let myPosition = null;
     if (myEntry) {
-      const isInTop50 = top50.some(e => e.userId === req.user.id);
-      if (isInTop50) {
-        myPosition = top50.findIndex(e => e.userId === req.user.id) + 1;
+      const inTop50Index = top50.findIndex(e => e.userId === req.user.id);
+      if (inTop50Index !== -1) {
+        myPosition = inTop50Index + 1;
       } else {
         const aheadCount = await prisma.questParticipant.count({
           where: {
@@ -207,9 +220,7 @@ async function getLeaderboard(req, res) {
             inTop50: top50.some(e => e.userId === req.user.id),
           }
         : null,
-      totalParticipants: await prisma.questParticipant.count({
-        where: { questId: id },
-      }),
+      totalParticipants,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

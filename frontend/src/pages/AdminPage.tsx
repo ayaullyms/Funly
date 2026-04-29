@@ -64,8 +64,16 @@ export function AdminPage({ onOpenEditor }: Props) {
   const finishQuest = async (id: string) => {
     if (!confirm('Complete quest and pick top 3 winners?')) return;
 
+    const rewardAmountStr = prompt('Reward amount per winner (TON):', '10');
+    if (rewardAmountStr === null) return;
+    const rewardAmountPerWinner = Number(rewardAmountStr);
+    if (Number.isNaN(rewardAmountPerWinner) || rewardAmountPerWinner <= 0) {
+      showToast('Invalid reward amount', 'error');
+      return;
+    }
+
     try {
-      await api.completeQuest(id, { winnersCount: 3 });
+      await api.completeQuest(id, { winnersCount: 3, rewardAmountPerWinner });
       showToast('Quest completed');
       load();
     } catch (e: any) {

@@ -29,6 +29,11 @@ const TABS = ['Info', 'Tasks', 'Board', 'Rules'];
 
 export function DetailPage({ onOpenTask }: Props) {
   const { navigate, showToast } = useApp();
+
+  const goBack = () => {
+    const returnPage = sessionStorage.getItem('questReturnPage');
+    navigate(returnPage === 'myquests' ? 'myquests' : 'home');
+  };
   const { questId, detailState, setDetailState } = useQuestDetail();
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
@@ -80,7 +85,7 @@ export function DetailPage({ onOpenTask }: Props) {
       }}>
         <div style={{ padding: '12px 14px 0' }}>
           {/* back */}
-          <button onClick={() => navigate('home')} style={backBtnStyle}>← Back</button>
+          <button onClick={goBack} style={backBtnStyle}>← Back</button>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', margin: '10px 0 4px' }}>
             <h1 style={{ fontWeight: 800, fontSize: 18, color: '#fff', lineHeight: 1.3, flex: 1, paddingRight: 8 }}>{q.title}</h1>

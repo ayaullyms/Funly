@@ -51,6 +51,7 @@ export function HomePage() {
   );
 
   const openQuest = (id: string) => {
+    sessionStorage.setItem('questReturnPage', 'home');
     setQuestId(id); setDetailState(null); navigate('detail');
   };
 

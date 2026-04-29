@@ -373,6 +373,7 @@ async function markRewardProcessing(req, res) {
       where: { id: rewardId, status: 'pending' },
       data: {
         status: 'processing',
+        processingAt: new Date(),
         ...(contractAddress ? { contractAddress } : {}),
       },
     });

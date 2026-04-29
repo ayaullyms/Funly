@@ -7,6 +7,9 @@ const userCtrl = require('../controllers/userController');
 const questCtrl = require('../controllers/questController');
 const taskCtrl = require('../controllers/taskController');
 const adminCtrl = require('../controllers/adminController');
+const webhookCtrl = require('../controllers/webhookController');
+
+router.post('/webhooks/ton-payment', webhookCtrl.handleTonPayment);
 
 router.use(authMiddleware);
 
@@ -53,7 +56,5 @@ router.post('/admin/quests/:id/complete', adminCtrl.completeQuest);
 router.get('/admin/rewards/pending', adminCtrl.getPendingRewards);
 router.post('/admin/rewards/:rewardId/processing', adminCtrl.markRewardProcessing);
 router.post('/admin/rewards/:rewardId/distribute', adminCtrl.distributeReward);
-
-router.post('/webhooks/ton-payment', webhookCtrl.handleTonPayment);
 
 module.exports = router;

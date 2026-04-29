@@ -34,14 +34,20 @@ export function MyQuestsPage() {
   useEffect(() => {
     api
       .getMyQuests()
-      .then((d) => setQuests(d.quests || []))
+      .then((d) => {
+        const visibleQuests = (d.quests || []).filter(
+          (q: Quest) => q.status !== "draft",
+        );
+        setQuests(visibleQuests);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = quests.filter((q) =>
-    filter === "all" ? true : q.status === filter,
-  );
+  const filtered = quests.filter((q) => {
+    if (q.status === "draft") return false;
+    return filter === "all" ? true : q.status === filter;
+  });
 
   const openQuest = (id: string) => {
     sessionStorage.setItem("questReturnPage", "myquests");
@@ -242,13 +248,15 @@ function MyQuestCard({
   const totalTasks = Number(q.totalTasks || 0);
   const completedTasks = getCompletedTasks(q, score, totalTasks);
   const progressPercent =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    totalTasks > 0
+      ? Math.min(100, Math.max(0, Math.round((completedTasks / totalTasks) * 100)))
+      : 0;
   const isWinner = (q as any).iWon;
   const isActive = q.status === "active";
 
   return (
     <div
-      onClick={() => onOpen(q.id)}
+      onClick={() => q.status !== "draft" && onOpen(q.id)}
       style={{
         background: C.bg2,
         border: `0.5px solid ${isActive ? "rgba(123,110,246,0.4)" : C.border}`,

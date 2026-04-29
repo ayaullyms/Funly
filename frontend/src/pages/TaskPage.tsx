@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
-import type { Task, Quest } from '../types';
+import type { Task } from '../types';
 import { useApp } from '../context/AppContext';
-import { useQuestDetail, type QuestDetailState } from '../context/QuestDetailContext';
+import { useQuestDetail } from '../context/QuestDetailContext';
 
 interface Props { taskId: string; taskIndex: number; onBack: () => void; }
 
@@ -37,26 +37,58 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
   const num       = currentIndex + 1;
   const progress  = ((num - 1) / total) * 100;
 
-  const submit = async () => {
+  const refreshQuestState = async () => {
     if (!questId) return;
-    // ✅ БАГ 1 FIX: берём значение по индексу
+    const [qd, lb] = await Promise.all([api.getQuest(questId), api.getLeaderboard(questId)]);
+    setDetailState({ questData: qd, lbData: lb });
+  };
+
+  const submit = async () => {
+    if (!questId || submitted || submitting) return;
+
     const answer = isMulti ? (selectedIndex !== null ? opts[selectedIndex] : null) : textAns.trim();
     if (!answer) { showToast(isMulti ? 'Select an answer' : 'Enter your answer', 'error'); return; }
+
     setSubmitting(true);
     try {
       const res = await api.submitTask(questId, task.id, answer);
-      updateTaskInCache(task.id, { myAnswer: answer, myAnswerCorrect: res.isCorrect, myPoints: res.pointsAwarded });
-      updateQuestInCache({ myScore: res.currentScore, myRank: res.currentRank, myCompletedTasks: (quest.myCompletedTasks || 0) + 1 });
+
+      updateTaskInCache(task.id, {
+        myAnswer: answer,
+        myAnswerCorrect: res.isCorrect,
+        myPoints: res.pointsAwarded,
+      });
+
+      updateQuestInCache({
+        myScore: res.currentScore,
+        myRank: res.currentRank,
+        myCompletedTasks: Math.max((quest.myCompletedTasks || 0) + 1, 1),
+      });
+
       showToast(res.isCorrect ? `Correct! +${res.pointsAwarded} pts` : 'Wrong answer', res.isCorrect ? 'success' : 'error');
 
-      api.getLeaderboard(questId).then(lb => {
-        if (detailState) {
-          setDetailState({ ...detailState, lbData: lb });
-        }
-      }).catch(() => {});
+      // ВАЖНО: после submit заново берём quest + leaderboard.
+      // Раньше leaderboard обновлялся через старый detailState и затирал myAnswer,
+      // поэтому задание было пройдено на бэке, но во фронте снова выглядело непройденным.
+      await refreshQuestState();
+    } catch (e: any) {
+      const msg = String(e?.message || '');
 
-    } catch (e: any) { showToast(e.message, 'error'); }
-    finally { setSubmitting(false); }
+      // Если бэк отвечает, что задание уже было отправлено, значит состояние фронта устарело.
+      // Просто синхронизируем данные, чтобы задание сразу показалось пройденным.
+      if (/already|submitted|completed|пройден|отправлен/i.test(msg)) {
+        try {
+          await refreshQuestState();
+          showToast('Task status updated');
+        } catch {
+          showToast(msg, 'error');
+        }
+      } else {
+        showToast(msg, 'error');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

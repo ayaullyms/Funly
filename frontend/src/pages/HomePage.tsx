@@ -6,13 +6,6 @@ import { Badge, SpinnerPage, EmptyState } from '../components/ui';
 import { useApp } from '../context/AppContext';
 import { useQuestDetail } from '../context/QuestDetailContext';
 
-const FILTERS = [
-  { id: '',          label: 'All' },
-  { id: 'active',    label: 'Active' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'draft',     label: 'Draft' },
-];
-
 /* ── colour tokens ── */
 const C = {
   bg2:    '#13131f',
@@ -32,27 +25,41 @@ export function HomePage() {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
-  const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
 
-  const load = useCallback(async (f: string) => {
-    setLoading(true); setError('');
-    try { const d = await api.listQuests(f); setQuests(d.quests || []); }
-    catch (e: any) { setError(e.message); }
-    finally { setLoading(false); }
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // Home должен показывать только активные квесты.
+      // Даже если backend случайно вернёт draft/completed, ниже мы ещё раз фильтруем на фронте.
+      const d = await api.listQuests('active');
+      setQuests(d.quests || []);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { load(filter); }, [filter]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const filtered = quests.filter(q =>
-    !search ||
-    q.title.toLowerCase().includes(search.toLowerCase()) ||
-    (q.shortDescription || '').toLowerCase().includes(search.toLowerCase())
+    q.status === 'active' &&
+    (
+      !search ||
+      q.title.toLowerCase().includes(search.toLowerCase()) ||
+      (q.shortDescription || '').toLowerCase().includes(search.toLowerCase())
+    )
   );
 
   const openQuest = (id: string) => {
     sessionStorage.setItem('questReturnPage', 'home');
-    setQuestId(id); setDetailState(null); navigate('detail');
+    setQuestId(id);
+    setDetailState(null);
+    navigate('detail');
   };
 
   return (
@@ -67,7 +74,7 @@ export function HomePage() {
       >
         <SearchIcon />
         <input
-          placeholder="Search quests..."
+          placeholder="Search active quests..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
@@ -78,28 +85,10 @@ export function HomePage() {
         />
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {FILTERS.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            style={{
-              flexShrink: 0, padding: '6px 16px', borderRadius: 20, fontSize: 12,
-              fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-              background: filter === f.id ? C.purple : C.bg2,
-              color: filter === f.id ? '#fff' : C.sec,
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
       {loading ? <SpinnerPage /> : error ? (
         <p style={{ color: '#f87171', textAlign: 'center', fontSize: 13, padding: '2rem 0' }}>{error}</p>
       ) : filtered.length === 0 ? (
-        <EmptyState text="No quests found" />
+        <EmptyState text="No active quests found" />
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map(q => <QuestCard key={q.id} quest={q} onOpen={openQuest} />)}
@@ -111,6 +100,9 @@ export function HomePage() {
 
 function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) => void }) {
   const isHot = (q.participantsCount || 0) >= 300;
+  const totalTasks = Number(q.totalTasks || 0);
+  const completedTasks = Math.max(0, Math.min(Number(q.myCompletedTasks || 0), totalTasks));
+  const progressPercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
   return (
     <div
@@ -162,16 +154,16 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
       </div>
 
       {/* progress bar for joined */}
-      {q.isJoined && q.totalTasks != null && q.totalTasks > 0 && (
+      {q.isJoined && totalTasks > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, height: 2, background: '#2a2a3a', borderRadius: 2 }}>
             <div style={{
               height: '100%', borderRadius: 2, background: C.purple,
-              width: `${((q.myCompletedTasks || 0) / q.totalTasks) * 100}%`,
+              width: `${progressPercent}%`,
             }} />
           </div>
           <span style={{ fontSize: 10, color: C.purple, fontFamily: 'IBM Plex Mono, monospace', flexShrink: 0 }}>
-            {q.myCompletedTasks || 0}/{q.totalTasks}
+            {completedTasks}/{totalTasks}
           </span>
         </div>
       )}

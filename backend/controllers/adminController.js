@@ -1,6 +1,28 @@
-//controller/admincontroller.js
+// controller/adminController.js
 
 const prisma = require('../config/prisma');
+
+// GET /api/admin/quests
+async function getAdminQuests(req, res) {
+  try {
+    const quests = await prisma.quest.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: { select: { tasks: true } },
+      },
+    });
+
+    res.json({
+      quests: quests.map(q => ({
+        ...q,
+        totalTasks: q._count.tasks,
+        _count: undefined,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 
 // POST /api/admin/quests
 async function createQuest(req, res) {
@@ -172,7 +194,11 @@ async function getParticipants(req, res) {
 async function completeQuest(req, res) {
   try {
     const { id } = req.params;
-    const { winnersCount = 3, rewardAmountPerWinner = 0 } = req.body;
+    const { winnersCount = 3, rewardAmountPerWinner } = req.body;
+
+    if (!rewardAmountPerWinner || Number(rewardAmountPerWinner) <= 0) {
+      return res.status(400).json({ error: 'rewardAmountPerWinner must be greater than 0' });
+    }
 
     const quest = await prisma.quest.findUnique({ where: { id }, select: { status: true } });
     if (!quest) return res.status(404).json({ error: 'Quest not found' });
@@ -187,13 +213,15 @@ async function completeQuest(req, res) {
       where: { questId: id, score: { gt: 0 } },
       orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
       take: winnersCount,
-      include: { user: { select: { firstName: true, username: true } } },
+      include: { user: { select: { firstName: true, username: true, walletAddress: true } } },
     });
 
     if (topParticipants.length === 0) {
       return res.status(400).json({ error: 'No participants with score > 0 found' });
     }
 
+    const winnersWithoutWallet = topParticipants.filter(p => !p.user.walletAddress);
+    
     await prisma.$transaction([
       prisma.quest.update({ where: { id }, data: { status: 'completed' } }),
       ...topParticipants.flatMap(p => [
@@ -205,7 +233,7 @@ async function completeQuest(req, res) {
           data: {
             questId: id,
             userId: p.userId,
-            amount: rewardAmountPerWinner,
+            amount: rewardAmountPerWinner, 
             rewardType: 'ton',
             status: 'pending',
           },
@@ -220,7 +248,12 @@ async function completeQuest(req, res) {
     res.json({
       success: true,
       winners: topParticipants.length,
+      rewardPerWinner: rewardAmountPerWinner,
       winnerNames: topParticipants.map(p => p.user.firstName || p.user.username),
+      // НОВОЕ: предупреждение если у кого-то нет кошелька
+      warnings: winnersWithoutWallet.length > 0
+        ? `${winnersWithoutWallet.length} winner(s) have no wallet address connected`
+        : null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -232,6 +265,10 @@ async function distributeReward(req, res) {
   try {
     const { rewardId } = req.params;
     const { transactionHash } = req.body;
+
+    if (!transactionHash) {
+      return res.status(400).json({ error: 'transactionHash is required' });
+    }
 
     const { count } = await prisma.reward.updateMany({
       where: { id: rewardId, status: 'pending' },
@@ -290,6 +327,7 @@ async function getStats(req, res) {
 }
 
 module.exports = {
+  getAdminQuests,  
   createQuest, updateQuest, deleteQuest,
   createTask, updateTask, deleteTask,
   getParticipants, completeQuest,

@@ -77,11 +77,19 @@ async function getMyRewards(req, res) {
   }
 }
 
+function isValidTonAddress(address) {
+  return /^[UE]Q[A-Za-z0-9_-]{46}$/.test(address);
+}
+
 // POST /api/users/me/wallet
 async function connectWallet(req, res) {
   try {
     const { walletAddress, providerName } = req.body;
     if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
+    
+    if (!isValidTonAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid TON wallet address format' });
+    }
 
     await prisma.walletConnection.updateMany({
       where: { userId: req.user.id },

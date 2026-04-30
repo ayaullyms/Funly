@@ -45,7 +45,7 @@ export const api = {
   getMe:            () => request<MeResponse>('GET', '/users/me'),
   getMyStats:       () => request<StatsResponse>('GET', '/users/me/stats'),
   getMyRewards:     () => request<RewardsResponse>('GET', '/users/me/rewards'),
-  connectWallet:    (body: { walletAddress: string }) => request<{ message: string }>('POST', '/users/me/wallet', body),
+  connectWallet:    (body: { walletAddress: string; providerName?: string }) => request<{ message: string }>('POST', '/users/me/wallet', body),
   disconnectWallet: () => request<{ message: string }>('DELETE', '/users/me/wallet'),
 
   // QUESTS
@@ -67,6 +67,7 @@ export const api = {
   createTask:       (qid: string, body: Partial<EditorTask>) => request<CreateTaskResponse>('POST', `/admin/quests/${qid}/tasks`, body),
   updateTask:       (tid: string, body: Partial<EditorTask>) => request<{ task: Task }>('PUT', `/admin/tasks/${tid}`, body),
   getParticipants:  (id: string) => request<ParticipantsResponse>('GET', `/admin/quests/${id}/participants`),
-  completeQuest:    (id: string, body: { winnersCount: number }) => request<{ message: string }>('POST', `/admin/quests/${id}/complete`, body),
+  completeQuest:    (id: string, body: { winnersCount: number; rewardAmountPerWinner: number }) =>
+    request<{ message: string }>('POST', `/admin/quests/${id}/complete`, body),
   distributeReward: (rid: string, body: unknown) => request<{ message: string }>('POST', `/admin/rewards/${rid}/distribute`, body),
 };

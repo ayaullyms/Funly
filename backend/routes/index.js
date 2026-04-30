@@ -7,6 +7,9 @@ const userCtrl = require('../controllers/userController');
 const questCtrl = require('../controllers/questController');
 const taskCtrl = require('../controllers/taskController');
 const adminCtrl = require('../controllers/adminController');
+const webhookCtrl = require('../controllers/webhookController');
+
+router.post('/webhooks/ton-payment', webhookCtrl.handleTonPayment);
 
 router.use(authMiddleware);
 

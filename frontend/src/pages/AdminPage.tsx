@@ -6,14 +6,18 @@ import { useApp } from '../context/AppContext';
 
 const C = {
   bg2: '#13131f',
+  bg3: '#1a1a2a',
   border: '#1e1e32',
   purple: '#7B6EF6',
   purpleL: '#9d90f8',
+  purpleB: 'rgba(123,110,246,0.35)',
   muted: '#44445a',
   sec: '#888',
   green: '#4ade80',
   red: '#f87171',
 };
+
+type AdminTab = 'active' | 'draft' | 'completed';
 
 interface Props {
   onOpenEditor: (id: string | null) => void;
@@ -25,6 +29,7 @@ export function AdminPage({ onOpenEditor }: Props) {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tab, setTab] = useState<AdminTab>('active');
 
   const load = async () => {
     setLoading(true);
@@ -46,8 +51,13 @@ export function AdminPage({ onOpenEditor }: Props) {
   }, []);
 
   const activeQuests = quests.filter(q => q.status === 'active');
-  const completedQuests = quests.filter(q => q.status === 'completed');
   const draftQuests = quests.filter(q => q.status === 'draft');
+  const completedQuests = quests.filter(q => q.status === 'completed');
+
+  const visibleQuests =
+    tab === 'active' ? activeQuests :
+    tab === 'draft' ? draftQuests :
+    completedQuests;
 
   const activateQuest = async (id: string) => {
     if (!confirm('Activate this quest?')) return;
@@ -55,6 +65,7 @@ export function AdminPage({ onOpenEditor }: Props) {
     try {
       await api.updateQuest(id, { status: 'active' });
       showToast('Quest activated');
+      setTab('active');
       load();
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -67,6 +78,7 @@ export function AdminPage({ onOpenEditor }: Props) {
     try {
       await api.completeQuest(id, { winnersCount: 3 });
       showToast('Quest completed');
+      setTab('completed');
       load();
     } catch (e: any) {
       showToast(e.message, 'error');
@@ -97,11 +109,17 @@ export function AdminPage({ onOpenEditor }: Props) {
 
   return (
     <div className="flex flex-col gap-5 pb-2">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <h1 style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Admin</h1>
+        <button onClick={() => onOpenEditor(null)} style={newQuestBtnSt}>+ New Quest</button>
+      </div>
+
       {/* Stats */}
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
           {[
-            { v: stats.totalUsers, l: 'Total Users' },
+            { v: stats.totalUsers, l: 'Users' },
             { v: stats.submissions?.total || 0, l: 'Submissions' },
           ].map((s, i) => (
             <div
@@ -117,7 +135,7 @@ export function AdminPage({ onOpenEditor }: Props) {
               <div style={{ fontSize: 17, fontWeight: 800, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>
                 {s.v}
               </div>
-              <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>
+              <div style={{ fontSize: 8, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>
                 {s.l}
               </div>
             </div>
@@ -125,34 +143,19 @@ export function AdminPage({ onOpenEditor }: Props) {
         </div>
       )}
 
-      {/* New quest + draft */}
-      <div className="flex flex-col gap-3">
-        <button onClick={() => onOpenEditor(null)} style={primaryBtnSt}>
-          + New Quest
-        </button>
-
-        {draftQuests.length > 0 && (
-          <QuestSection title="Draft">
-            {draftQuests.map(q => (
-              <AdminQuestRow
-                key={q.id}
-                quest={q}
-                onEdit={() => onOpenEditor(q.id)}
-                onActivate={() => activateQuest(q.id)}
-                onFinish={() => finishQuest(q.id)}
-                onRemove={() => removeQuest(q.id)}
-              />
-            ))}
-          </QuestSection>
-        )}
+      {/* Tabs: active shown by default, drafts/completed separate */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 10, padding: 3 }}>
+        <TabButton label="Active" count={activeQuests.length} active={tab === 'active'} onClick={() => setTab('active')} />
+        <TabButton label="Drafts" count={draftQuests.length} active={tab === 'draft'} onClick={() => setTab('draft')} />
+        <TabButton label="Done" count={completedQuests.length} active={tab === 'completed'} onClick={() => setTab('completed')} />
       </div>
 
-      {/* Active quests */}
-      <QuestSection title="Active Quests">
-        {activeQuests.length === 0 ? (
-          <EmptyState text="No active quests" />
-        ) : (
-          activeQuests.map(q => (
+      {/* Quest list */}
+      {visibleQuests.length === 0 ? (
+        <EmptyState text={tab === 'active' ? 'No active quests' : tab === 'draft' ? 'No draft quests' : 'No completed quests'} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {visibleQuests.map(q => (
             <AdminQuestRow
               key={q.id}
               quest={q}
@@ -161,44 +164,31 @@ export function AdminPage({ onOpenEditor }: Props) {
               onFinish={() => finishQuest(q.id)}
               onRemove={() => removeQuest(q.id)}
             />
-          ))
-        )}
-      </QuestSection>
-
-      {/* Completed quests */}
-      <QuestSection title="Completed Quests">
-        {completedQuests.length === 0 ? (
-          <EmptyState text="No completed quests" />
-        ) : (
-          completedQuests.map(q => (
-            <AdminQuestRow
-              key={q.id}
-              quest={q}
-              onEdit={() => onOpenEditor(q.id)}
-              onActivate={() => activateQuest(q.id)}
-              onFinish={() => finishQuest(q.id)}
-              onRemove={() => removeQuest(q.id)}
-            />
-          ))
-        )}
-      </QuestSection>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-interface SectionProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-function QuestSection({ title, children }: SectionProps) {
+function TabButton({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
   return (
-    <section className="flex flex-col gap-3">
-      <div style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 800, fontFamily: 'IBM Plex Mono, monospace' }}>
-        {title}
-      </div>
-      {children}
-    </section>
+    <button
+      onClick={onClick}
+      style={{
+        background: active ? 'rgba(123,110,246,0.18)' : 'transparent',
+        color: active ? C.purpleL : C.sec,
+        border: 'none',
+        borderRadius: 7,
+        padding: '7px 4px',
+        fontSize: 10,
+        fontWeight: 700,
+        cursor: 'pointer',
+        fontFamily: 'IBM Plex Sans, sans-serif',
+      }}
+    >
+      {label} <span style={{ color: active ? '#fff' : C.muted }}>{count}</span>
+    </button>
   );
 }
 
@@ -241,7 +231,12 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove }: Row
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '11px 14px 5px' }}>
         <div style={{ flex: 1, paddingRight: 8 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#ddd' }}>{q.title}</div>
-          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>{q.participantsCount || 0} participants</div>
+          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>
+            {q.participantsCount || 0} participants
+            {q.status === 'active' && <span> · active</span>}
+            {q.status === 'draft' && <span> · draft</span>}
+            {q.status === 'completed' && <span> · completed</span>}
+          </div>
         </div>
         <StatusBadge status={q.status} />
       </div>
@@ -313,7 +308,7 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove }: Row
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { color: string; bg: string; border: string }> = {
     active: { color: '#9d90f8', bg: 'rgba(123,110,246,0.15)', border: 'rgba(123,110,246,0.35)' },
-    draft: { color: '#555', bg: 'rgba(100,100,120,0.2)', border: '#2a2a3a' },
+    draft: { color: '#777', bg: 'rgba(100,100,120,0.2)', border: '#2a2a3a' },
     completed: { color: '#4ade80', bg: 'rgba(74,222,128,0.1)', border: 'rgba(74,222,128,0.25)' },
   };
 
@@ -326,17 +321,17 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-const primaryBtnSt: React.CSSProperties = {
-  background: '#7B6EF6',
+const newQuestBtnSt: React.CSSProperties = {
+  background: '#05050c',
   color: '#fff',
-  fontSize: 13,
-  fontWeight: 700,
-  padding: '10px 14px',
-  borderRadius: 9,
-  border: 'none',
+  fontSize: 11,
+  fontWeight: 800,
+  padding: '8px 12px',
+  borderRadius: 8,
+  border: `0.5px solid ${C.border}`,
   cursor: 'pointer',
   fontFamily: 'IBM Plex Sans, sans-serif',
-  width: '100%',
+  whiteSpace: 'nowrap',
 };
 
 const primaryBtnSmSt: React.CSSProperties = {

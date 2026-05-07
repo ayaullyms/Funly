@@ -1,3 +1,4 @@
+//utils/index.ts
 export function esc(str?: string | null): string {
   return (str || '')
     .replace(/&/g, '&amp;')

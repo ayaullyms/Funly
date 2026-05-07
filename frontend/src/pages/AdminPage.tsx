@@ -73,19 +73,13 @@ export function AdminPage({ onOpenEditor }: Props) {
   };
 
   const finishQuest = async (id: string) => {
-    if (!confirm('Complete quest and pick top 3 winners?')) return;
-
-    const rewardAmountStr = prompt('Reward amount per winner (TON):', '10');
-    if (rewardAmountStr === null) return;
-    const rewardAmountPerWinner = Number(rewardAmountStr);
-    if (Number.isNaN(rewardAmountPerWinner) || rewardAmountPerWinner <= 0) {
-      showToast('Invalid reward amount', 'error');
-      return;
-    }
-
+    if (!confirm('Complete quest and distribute rewards to top winners?')) return;
     try {
-      await api.completeQuest(id, { winnersCount: 3, rewardAmountPerWinner });
-      showToast('Quest completed');
+      const result = await api.completeQuest(id, {});
+      showToast(`Quest completed! ${result.winners ?? 0} winners selected`);
+      if (typeof result.warnings === 'string' && result.warnings) {
+        showToast(result.warnings, 'error');
+      }
       setTab('completed');
       load();
     } catch (e: any) {
@@ -118,8 +112,8 @@ export function AdminPage({ onOpenEditor }: Props) {
   return (
     <div className="flex flex-col gap-5 pb-2">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-        <h1 style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Admin</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div />
         <button onClick={() => onOpenEditor(null)} style={newQuestBtnSt}>+ New Quest</button>
       </div>
 

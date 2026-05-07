@@ -32,12 +32,8 @@ export function HomePage() {
     setError('');
 
     try {
-      // Home показывает только active quests.
       const d = await api.listQuests('active');
       const activeQuests: Quest[] = (d.quests || []).filter((q: Quest) => q.status === 'active');
-
-      // В listQuests backend не всегда присылает актуальный myCompletedTasks.
-      // Поэтому для joined-квестов подтягиваем детали и считаем выполненные задания по tasks.
       const withProgress = await Promise.all(
         activeQuests.map(async (q) => {
           if (!q.isJoined) return q;

@@ -38,6 +38,13 @@ interface AdminStatsResponse { totalUsers: number; submissions?: { total: number
 interface CreateQuestResponse { quest: Quest }
 interface CreateTaskResponse { task: Task }
 interface ParticipantsResponse { participants: Participant[] }
+interface CompleteQuestResponse {
+  success: boolean;
+  winners: number;
+  rewardPerWinner: number;
+  winnerNames: string[];
+  warnings: string | null;
+}
 
 // ── API ──────────────────────────────────────
 export const api = {
@@ -67,7 +74,6 @@ export const api = {
   createTask:       (qid: string, body: Partial<EditorTask>) => request<CreateTaskResponse>('POST', `/admin/quests/${qid}/tasks`, body),
   updateTask:       (tid: string, body: Partial<EditorTask>) => request<{ task: Task }>('PUT', `/admin/tasks/${tid}`, body),
   getParticipants:  (id: string) => request<ParticipantsResponse>('GET', `/admin/quests/${id}/participants`),
-  completeQuest:    (id: string, body: { winnersCount: number; rewardAmountPerWinner: number }) =>
-    request<{ message: string }>('POST', `/admin/quests/${id}/complete`, body),
+  completeQuest: (id: string, body?: object) => request<CompleteQuestResponse>('POST', `/admin/quests/${id}/complete`, body),
   distributeReward: (rid: string, body: unknown) => request<{ message: string }>('POST', `/admin/rewards/${rid}/distribute`, body),
 };

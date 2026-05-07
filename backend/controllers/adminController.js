@@ -30,6 +30,7 @@ async function createQuest(req, res) {
     const {
       title, shortDescription, fullDescription,
       rewardDescription, rules, startDate, endDate, status,
+      rewardAmountPerWinner, winnersCount,
     } = req.body;
 
     if (!title) return res.status(400).json({ error: 'title required' });
@@ -47,6 +48,8 @@ async function createQuest(req, res) {
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
         status: status || 'draft',
+        rewardAmountPerWinner: rewardAmountPerWinner ? Number(rewardAmountPerWinner) : null,
+        winnersCount: winnersCount ? Number(winnersCount) : 3,
         createdBy: req.user.id,
       },
     });
@@ -64,6 +67,7 @@ async function updateQuest(req, res) {
     const {
       title, shortDescription, fullDescription,
       rewardDescription, rules, startDate, endDate, status,
+      rewardAmountPerWinner, winnersCount,
     } = req.body;
 
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
@@ -80,6 +84,8 @@ async function updateQuest(req, res) {
         rules,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
+        rewardAmountPerWinner: rewardAmountPerWinner ? Number(rewardAmountPerWinner) : null,
+        winnersCount: winnersCount ? Number(winnersCount) : 3,
         status,
       },
     });
@@ -206,46 +212,74 @@ async function getParticipants(req, res) {
 async function completeQuest(req, res) {
   try {
     const { id } = req.params;
-    const { winnersCount = 3, rewardAmountPerWinner } = req.body;
-
-    const rewardAmount = Number(rewardAmountPerWinner);
-    if (!rewardAmountPerWinner || isNaN(rewardAmount) || rewardAmount <= 0) {
-      return res.status(400).json({ error: 'rewardAmountPerWinner must be a number greater than 0' });
-    }
 
     const quest = await prisma.quest.findUnique({
       where: { id },
-      select: { status: true },
     });
-    if (!quest) return res.status(404).json({ error: 'Quest not found' });
+
+    if (!quest) {
+      return res.status(404).json({ error: 'Quest not found' });
+    }
+
     if (quest.status === 'completed') {
       return res.status(400).json({ error: 'Quest is already completed' });
     }
 
-    const totalTasks = await prisma.task.count({ where: { questId: id } });
+    const rewardAmount = Number(quest.rewardAmountPerWinner);
+
+    if (!rewardAmount || rewardAmount <= 0) {
+      return res.status(400).json({
+        error: 'Set rewardAmountPerWinner before completing',
+      });
+    }
+
+    const winnersCount = quest.winnersCount || 3;
+
+    const totalTasks = await prisma.task.count({
+      where: { questId: id },
+    });
+
     if (totalTasks === 0) {
       return res.status(400).json({ error: 'Quest has no tasks' });
     }
 
     const topParticipants = await prisma.questParticipant.findMany({
-      where: { questId: id, score: { gt: 0 } },
-      orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
+      where: {
+        questId: id,
+        score: { gt: 0 },
+      },
+      orderBy: [
+        { score: 'desc' },
+        { joinedAt: 'asc' },
+      ],
       take: winnersCount,
       include: {
         user: {
-          select: { firstName: true, username: true, walletAddress: true },
+          select: {
+            firstName: true,
+            username: true,
+            walletAddress: true,
+          },
         },
       },
     });
 
     if (topParticipants.length === 0) {
-      return res.status(400).json({ error: 'No participants with score > 0 found' });
+      return res.status(400).json({
+        error: 'No participants with score > 0 found',
+      });
     }
 
-    const winnersWithoutWallet = topParticipants.filter(p => !p.user.walletAddress);
+    const winnersWithoutWallet = topParticipants.filter(
+      p => !p.user.walletAddress
+    );
 
     await prisma.$transaction([
-      prisma.quest.update({ where: { id }, data: { status: 'completed' } }),
+      prisma.quest.update({
+        where: { id },
+        data: { status: 'completed' },
+      }),
+
       ...topParticipants.flatMap(p => [
         prisma.questParticipant.update({
           where: { id: p.id },
@@ -261,9 +295,12 @@ async function completeQuest(req, res) {
             status: 'pending',
           },
         }),
+
         prisma.user.update({
           where: { id: p.userId },
-          data: { totalWins: { increment: 1 } },
+          data: {
+            totalWins: { increment: 1 },
+          },
         }),
       ]),
     ]);
@@ -272,11 +309,15 @@ async function completeQuest(req, res) {
       success: true,
       winners: topParticipants.length,
       rewardPerWinner: rewardAmount,
-      winnerNames: topParticipants.map(p => p.user.firstName || p.user.username),
-      warnings: winnersWithoutWallet.length > 0
-        ? `${winnersWithoutWallet.length} winner(s) have no wallet address connected`
-        : null,
+      winnerNames: topParticipants.map(
+        p => p.user.firstName || p.user.username
+      ),
+      warnings:
+        winnersWithoutWallet.length > 0
+          ? `${winnersWithoutWallet.length} winner(s) have no wallet address connected`
+          : null,
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -30,6 +30,8 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
   const [fullDesc,  setFullDesc]  = useState('');
   const [reward,    setReward]    = useState('');
   const [rules,     setRules]     = useState('');
+  const [rewardAmount, setRewardAmount] = useState('');
+  const [winnersCount, setWinnersCount] = useState('3');
   const [status,    setStatus]    = useState('draft');
   const [startDate, setStartDate] = useState('');
   const [endDate,   setEndDate]   = useState('');
@@ -43,6 +45,12 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
         setTitle(q.title || ''); setShortDesc(q.shortDescription || '');
         setFullDesc(q.fullDescription || ''); setReward(q.rewardDescription || '');
         setRules(q.rules || ''); setStatus(q.status || 'draft');
+        if (q.rewardAmountPerWinner != null) {
+          setRewardAmount(String(q.rewardAmountPerWinner));
+        }
+        if (q.winnersCount != null) {
+          setWinnersCount(String(q.winnersCount));
+        }
         if (q.startDate) setStartDate(q.startDate.slice(0, 10));
         if (q.endDate)   setEndDate(q.endDate.slice(0, 10));
         setTasks(t.map(tt => ({
@@ -60,7 +68,19 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
     if (!title.trim()) { showToast('Title is required', 'error'); return; }
     setSaving(true);
     try {
-      const body = { title, shortDescription: shortDesc, fullDescription: fullDesc, rewardDescription: reward, rules, startDate: startDate || undefined, endDate: endDate || undefined, status: status as any };
+      const body = {
+        title,
+        shortDescription: shortDesc,
+        fullDescription: fullDesc,
+        rewardDescription: reward,
+        rules,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        status: status as any,
+
+        rewardAmountPerWinner: rewardAmount ? Number(rewardAmount) : undefined,
+        winnersCount: winnersCount ? Number(winnersCount) : 3,
+      };
       if (questId) { await api.updateQuest(questId, body); showToast('Quest updated'); }
       else { const d = await api.createQuest(body); setQuestId(d.quest.id); showToast('Quest created!'); }
       setStep(1);
@@ -149,8 +169,30 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
             <textarea placeholder="Full description..." value={fullDesc} onChange={e => setFullDesc(e.target.value)} rows={3} style={{ ...inputSt, resize: 'vertical' }} />
           </Field>
           <Field label="Reward">
-            <input placeholder="e.g. 50 TON for top 3" value={reward} onChange={e => setReward(e.target.value)} style={inputSt} />
+            <input placeholder="e.g. 5 TON" value={reward} onChange={e => setReward(e.target.value)} style={inputSt} />
           </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <Field label="Reward per winner (TON)">
+              <input
+                type="number"
+                placeholder="e.g. 10"
+                value={rewardAmount}
+                onChange={e => setRewardAmount(e.target.value)}
+                style={inputSt}
+              />
+            </Field>
+            <Field label="Winners count">
+              <input
+                type="number"
+                placeholder="3"
+                value={winnersCount}
+                min={1}
+                max={10}
+                onChange={e => setWinnersCount(e.target.value)}
+                style={inputSt}
+              />
+            </Field>
+          </div>
           <Field label="Rules">
             <textarea placeholder="Quest rules..." value={rules} onChange={e => setRules(e.target.value)} rows={3} style={{ ...inputSt, resize: 'vertical' }} />
           </Field>
@@ -199,6 +241,8 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
             {[
               { l: 'Title',      v: title || '—' },
               { l: 'Reward',     v: reward || '—' },
+              { l: 'Reward/winner', v: rewardAmount ? `${rewardAmount} TON` : '—' },
+              { l: 'Winners',       v: winnersCount || '3' },
               { l: 'Questions',  v: `${tasks.length} added` },
               { l: 'Start date', v: startDate || '—' },
               { l: 'End date',   v: endDate || '—' },

@@ -28,6 +28,8 @@ export interface Quest {
   endDate?: string;
   participantsCount?: number;
   totalTasks?: number;
+  rewardAmountPerWinner?: number | null;
+  winnersCount?: number; 
   // joined user fields
   isJoined?: boolean;
   myScore?: number;
@@ -118,4 +120,12 @@ export interface EditorTask {
   options: string[];
   points: number;
   orderIndex: number;
+}
+
+export interface CompleteQuestResult {
+  success: boolean;
+  winners: number;
+  rewardPerWinner: number;
+  winnerNames: string[];
+  warnings: string | null;
 }

@@ -61,19 +61,23 @@ async function updateQuest(req, res) {
       return res.status(400).json({ error: 'endDate must be after startDate' });
     }
 
-    const quest = await prisma.quest.update({
-      where: { id },
-      data: {
-        title, shortDescription, fullDescription,
-        rewardDescription, rules,
-        startDate: startDate ? new Date(startDate) : null,
-        endDate:   endDate   ? new Date(endDate)   : null,
-        rewardAmountPerWinner: rewardAmountPerWinner ? Number(rewardAmountPerWinner) : null,
-        winnersCount: winnersCount ? Number(winnersCount) : 3,
-        status,
-      },
-    });
+    const data = {};
+    if (title !== undefined) data.title = title;
+    if (shortDescription !== undefined) data.shortDescription  = shortDescription;
+    if (fullDescription !== undefined) data.fullDescription   = fullDescription;
+    if (rewardDescription !== undefined) data.rewardDescription = rewardDescription;
+    if (rules !== undefined) data.rules = rules;
+    if (status !== undefined) data.status = status;
+    if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
+    if (endDate !== undefined) data.endDate = endDate   ? new Date(endDate)   : null;
+    if (rewardAmountPerWinner !== undefined) {
+      data.rewardAmountPerWinner = rewardAmountPerWinner ? Number(rewardAmountPerWinner) : null;
+    }
+    if (winnersCount !== undefined) {
+      data.winnersCount = Number(winnersCount) || 3;
+    }
 
+    const quest = await prisma.quest.update({ where: { id }, data });
     res.json({ quest });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Quest not found' });

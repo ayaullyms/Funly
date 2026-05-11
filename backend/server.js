@@ -14,7 +14,19 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function(origin, callback) {
+    const allowed = [
+      process.env.FRONTEND_URL,
+      'https://funly-three.vercel.app',
+    ].filter(Boolean);
+    if (!origin) return callback(null, true);
+    
+    if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -30,7 +42,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Routes
-app.use(express.static('../frontend'));
 app.use('/api', routes);
 
 // Health check

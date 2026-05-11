@@ -178,6 +178,8 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
                 placeholder="e.g. 10"
                 value={rewardAmount}
                 onChange={e => setRewardAmount(e.target.value)}
+                step="0.01"
+                min="0.01"
                 style={inputSt}
               />
             </Field>

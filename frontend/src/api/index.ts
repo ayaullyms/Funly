@@ -5,7 +5,8 @@ import type {
   UserStats, Participant, AdminStats, QuestDetail, EditorTask,
 } from '../types';
 
-const BASE = 'http://localhost:3001/api';
+// const BASE = 'http://localhost:3001/api';
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 function getInitData(): string {
   return (window as any).Telegram?.WebApp?.initData || 'dev_mock';

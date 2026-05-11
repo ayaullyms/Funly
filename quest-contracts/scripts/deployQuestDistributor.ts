@@ -15,5 +15,4 @@ export async function run(provider: NetworkProvider) {
 
     await provider.waitForDeploy(questDistributor.address);
 
-    // run methods on `questDistributor`
 }

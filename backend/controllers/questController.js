@@ -1,4 +1,4 @@
-//controller/questcontroller.js
+// controller/questController.js
 
 const prisma = require('../config/prisma');
 
@@ -106,8 +106,14 @@ async function getQuest(req, res) {
     if (!quest) return res.status(404).json({ error: 'Quest not found' });
 
     const myParticipation = quest.participants[0] || null;
-    const myCompletedTasks = quest.tasks.filter(t => t.submissions.length > 0).length;
     const totalTasks = quest._count.tasks;
+
+    const mySubmittedTasks = quest.tasks.filter(t => t.submissions.length > 0).length;
+    const myCorrectTasks = quest.tasks.filter(t =>
+      t.submissions.some(s => s.isCorrect)
+    ).length;
+
+    const isQuestCompleted = myParticipation?.status === 'completed';
 
     res.json({
       quest: {
@@ -117,19 +123,21 @@ async function getQuest(req, res) {
         myRank: myParticipation?.rank ?? null,
         myStatus: myParticipation?.status ?? null,
         iWon: myParticipation?.isWinner ?? false,
-        totalTasks,               
-        myCompletedTasks,
-        isQuestCompleted: myParticipation?.status === 'completed',
+        totalTasks,
+        mySubmittedTasks,  
+        myCorrectTasks,    
+        isQuestCompleted,  
         participants: undefined,
         _count: undefined,
       },
       tasks: quest.tasks.map(t => ({
         ...t,
-        correctAnswer: undefined, // never expose to client
+        correctAnswer: undefined,        
         options: t.options || [],
         myAnswerCorrect: t.submissions[0]?.isCorrect ?? null,
         myPoints: t.submissions[0]?.pointsAwarded ?? null,
         myAnswer: t.submissions[0]?.submittedAnswer ?? null,
+        isSubmitted: t.submissions.length > 0,
         submissions: undefined,
       })),
     });
@@ -139,92 +147,44 @@ async function getQuest(req, res) {
 }
 
 // GET /api/quests/:id/leaderboard
-// async function getLeaderboard(req, res) {
-//   try {
-//     const { id } = req.params;
-
-//     const top50 = await prisma.questParticipant.findMany({
-//       where: { questId: id },
-//       orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
-//       take: 50,
-//       include: {
-//         user: { select: { username: true, firstName: true, lastName: true, photoUrl: true } },
-//       },
-//     });
-
-//     const myEntry = await prisma.questParticipant.findUnique({
-//       where: { questId_userId: { questId: id, userId: req.user.id } },
-//       select: { score: true, rank: true, isWinner: true, status: true },
-//     });
-
-//     let myPosition = null;
-//     if (myEntry) {
-//       const isInTop50 = top50.some(e => e.userId === req.user.id);
-//       if (isInTop50) {
-//         myPosition = top50.findIndex(e => e.userId === req.user.id) + 1;
-//       } else {
-//         const aheadCount = await prisma.questParticipant.count({
-//           where: {
-//             questId: id,
-//             OR: [
-//               { score: { gt: myEntry.score } },
-//               { score: myEntry.score, joinedAt: { lt: new Date() } },
-//             ],
-//           },
-//         });
-//         myPosition = aheadCount + 1;
-//       }
-//     }
-
-//     res.json({
-//       leaderboard: entries.map((e, i) => ({
-//         rank: i + 1,
-//         score: e.score,
-//         isWinner: e.isWinner,
-//         status: e.status,
-//         isMe: e.userId === req.user.id,
-//         username: e.user.username,
-//         firstName: e.user.firstName,
-//         lastName: e.user.lastName,
-//         photoUrl: e.user.photoUrl,
-//       })),
-//       myPosition: myEntry ? {
-//         rank: myPosition,
-//         score: myEntry.score,
-//         isWinner: myEntry.isWinner,
-//         status: myEntry.status,
-//         inTop50: top50.some(e => e.userId === req.user.id),
-//       } : null,
-//       totalParticipants: await prisma.questParticipant.count({ where: { questId: id } }),
-//     });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// }
-
 async function getLeaderboard(req, res) {
   try {
     const { id } = req.params;
 
-    const top50 = await prisma.questParticipant.findMany({
-      where: { questId: id },
-      orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
-      take: 50,
-      include: {
-        user: { select: { username: true, firstName: true, lastName: true, photoUrl: true } },
-      },
-    });
-
-    const myEntry = await prisma.questParticipant.findUnique({
-      where: { questId_userId: { questId: id, userId: req.user.id } },
-      select: { score: true, rank: true, isWinner: true, status: true, joinedAt: true },
-    });
+    const [top50, myEntry, totalParticipants] = await prisma.$transaction([
+      prisma.questParticipant.findMany({
+        where: { questId: id },
+        orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
+        take: 50,
+        include: {
+          user: {
+            select: {
+              username: true,
+              firstName: true,
+              lastName: true,
+              photoUrl: true,
+            },
+          },
+        },
+      }),
+      prisma.questParticipant.findUnique({
+        where: { questId_userId: { questId: id, userId: req.user.id } },
+        select: {
+          score: true,
+          rank: true,
+          isWinner: true,
+          status: true,
+          joinedAt: true,
+        },
+      }),
+      prisma.questParticipant.count({ where: { questId: id } }),
+    ]);
 
     let myPosition = null;
     if (myEntry) {
-      const isInTop50 = top50.some(e => e.userId === req.user.id);
-      if (isInTop50) {
-        myPosition = top50.findIndex(e => e.userId === req.user.id) + 1;
+      const inTop50Index = top50.findIndex(e => e.userId === req.user.id);
+      if (inTop50Index !== -1) {
+        myPosition = inTop50Index + 1;
       } else {
         const aheadCount = await prisma.questParticipant.count({
           where: {
@@ -251,14 +211,16 @@ async function getLeaderboard(req, res) {
         lastName: e.user.lastName,
         photoUrl: e.user.photoUrl,
       })),
-      myPosition: myEntry ? {
-        rank: myPosition,
-        score: myEntry.score,
-        isWinner: myEntry.isWinner,
-        status: myEntry.status,
-        inTop50: top50.some(e => e.userId === req.user.id),
-      } : null,
-      totalParticipants: await prisma.questParticipant.count({ where: { questId: id } }),
+      myPosition: myEntry
+        ? {
+            rank: myPosition,
+            score: myEntry.score,
+            isWinner: myEntry.isWinner,
+            status: myEntry.status,
+            inTop50: top50.some(e => e.userId === req.user.id),
+          }
+        : null,
+      totalParticipants,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -272,12 +234,16 @@ async function joinQuest(req, res) {
 
     const quest = await prisma.quest.findUnique({ where: { id } });
     if (!quest) return res.status(404).json({ error: 'Quest not found' });
-    if (quest.status !== 'active') return res.status(400).json({ error: 'Quest is not active' });
+    if (quest.status !== 'active') {
+      return res.status(400).json({ error: 'Quest is not active' });
+    }
+    if (quest.endDate && new Date() > new Date(quest.endDate)) {
+      return res.status(400).json({ error: 'Quest has already ended' });
+    }
 
     const existing = await prisma.questParticipant.findUnique({
       where: { questId_userId: { questId: id, userId: req.user.id } },
     });
-
     if (existing) return res.json({ participant: existing, alreadyJoined: true });
 
     const [participant] = await prisma.$transaction([

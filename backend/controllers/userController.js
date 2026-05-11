@@ -1,6 +1,7 @@
 //controller/usercontroller.js
 
 const prisma = require('../config/prisma');
+const { Address } = require('@ton/core');
 
 // GET /api/users/me
 async function getMe(req, res) {
@@ -77,11 +78,19 @@ async function getMyRewards(req, res) {
   }
 }
 
+function normalizeTonAddress(input) {
+  const addr = Address.parse(input);
+  const raw = addr.toRawString(); 
+  const friendly = addr.toString({ urlSafe: true, bounceable: true });
+  return { raw, friendly };
+}
+
 // POST /api/users/me/wallet
 async function connectWallet(req, res) {
   try {
     const { walletAddress, providerName } = req.body;
     if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
+    const { raw, friendly } = normalizeTonAddress(walletAddress);
 
     await prisma.walletConnection.updateMany({
       where: { userId: req.user.id },
@@ -89,16 +98,19 @@ async function connectWallet(req, res) {
     });
 
     await prisma.walletConnection.create({
-      data: { userId: req.user.id, walletAddress, providerName: providerName || 'TON Connect' },
+      data: { userId: req.user.id, walletAddress: raw, providerName: providerName || 'TON Connect' },
     });
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { walletAddress },
+      data: { walletAddress: raw, walletAddressFriendly: friendly },
     });
 
     res.json({ user: { ...user, telegramId: user.telegramId.toString() } });
   } catch (err) {
+    if (err?.message?.includes('Invalid address')) {
+      return res.status(400).json({ error: 'Invalid TON wallet address' });
+    }
     res.status(500).json({ error: err.message });
   }
 }
@@ -112,7 +124,7 @@ async function disconnectWallet(req, res) {
     });
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { walletAddress: null },
+      data: { walletAddress: null, walletAddressFriendly: null }
     });
     res.json({ user: { ...user, telegramId: user.telegramId.toString() } });
   } catch (err) {

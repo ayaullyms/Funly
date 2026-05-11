@@ -1,13 +1,14 @@
-//controller/taskcontroller.js
+// controller/taskController.js
+
 const prisma = require('../config/prisma');
 
-// Internal: recalculate ranks for all participants in a quest
 async function updateRanks(questId) {
   const participants = await prisma.questParticipant.findMany({
     where: { questId },
     orderBy: [{ score: 'desc' }, { joinedAt: 'asc' }],
     select: { id: true },
   });
+
   await prisma.$transaction(
     participants.map((p, i) =>
       prisma.questParticipant.update({
@@ -18,44 +19,28 @@ async function updateRanks(questId) {
   );
 }
 
-// Internal: check if user completed all tasks and mark quest as completed
-async function checkAndCompleteQuest(questId, userId) {
-  const totalTasks = await prisma.task.count({ where: { questId } });
-  if (totalTasks === 0) return;
- 
-  const completedTasks = await prisma.taskSubmission.count({
-    where: { questId, userId },
-  });
- 
-  if (completedTasks >= totalTasks) {
-    await prisma.questParticipant.update({
-      where: { questId_userId: { questId, userId } },
-      data: { status: 'completed', completedAt: new Date() },
-    });
-  }
-}
-
 // POST /api/quests/:questId/tasks/:taskId/submit
 async function submitTask(req, res) {
   try {
     const { questId, taskId } = req.params;
     const { answer } = req.body;
 
-    if (!answer?.trim()) return res.status(400).json({ error: 'Answer is required' });
+    if (!answer?.trim()) {
+      return res.status(400).json({ error: 'Answer is required' });
+    }
 
-    // Must be a participant
     const participant = await prisma.questParticipant.findUnique({
       where: { questId_userId: { questId, userId: req.user.id } },
     });
-    if (!participant) return res.status(403).json({ error: 'Not a participant' });
+    if (!participant) {
+      return res.status(403).json({ error: 'Not a participant' });
+    }
 
-    // Get task
     const task = await prisma.task.findFirst({
       where: { id: taskId, questId },
       include: { quest: { select: { endDate: true, status: true } } },
     });
     if (!task) return res.status(404).json({ error: 'Task not found' });
-
     if (task.quest.status !== 'active') {
       return res.status(400).json({ error: 'Quest is not active' });
     }
@@ -63,52 +48,80 @@ async function submitTask(req, res) {
       return res.status(400).json({ error: 'Quest has ended' });
     }
 
-    // Duplicate check
-    const existing = await prisma.taskSubmission.findUnique({
-      where: { taskId_userId: { taskId, userId: req.user.id } },
+    const existingSubmission = await prisma.taskSubmission.findUnique({
+      where: {
+        taskId_userId: { taskId, userId: req.user.id },
+      },
     });
-    if (existing) return res.status(409).json({ error: 'Already submitted' });
+    if (existingSubmission) {
+      return res.status(409).json({ error: 'Already submitted this task' });
+    }
 
-    // Grade answer
-    let isCorrect = false;
-    let pointsAwarded = 0;
-    isCorrect = task.correctAnswer?.toLowerCase().trim() === answer.toLowerCase().trim();
-    pointsAwarded = isCorrect ? task.points : 0;
-      
-    // Save submission + update score in one transaction
+    const isCorrect =
+      task.correctAnswer?.toLowerCase().trim() === answer.toLowerCase().trim();
+    const pointsAwarded = isCorrect ? task.points : 0;
+
+    const totalTasks = await prisma.task.count({ where: { questId } });
+
+    const previouslySubmittedCount = await prisma.taskSubmission.count({
+      where: { questId, userId: req.user.id },
+    });
+    const isQuestCompleted = previouslySubmittedCount + 1 >= totalTasks;
+
+    const nextStatus = isQuestCompleted
+      ? 'completed'
+      : participant.status === 'joined'
+      ? 'in_progress'
+      : participant.status; 
+
     const [submission] = await prisma.$transaction([
       prisma.taskSubmission.create({
-        data: { taskId, userId: req.user.id, questId, submittedAnswer: answer, isCorrect, pointsAwarded },
+        data: {
+          taskId,
+          userId: req.user.id,
+          questId,
+          submittedAnswer: answer,
+          isCorrect,
+          pointsAwarded,
+        },
       }),
       prisma.questParticipant.update({
         where: { questId_userId: { questId, userId: req.user.id } },
-        data: { score: { increment: pointsAwarded }, status: 'in_progress' },
+        data: {
+          score: { increment: pointsAwarded },
+          status: nextStatus,
+        },
       }),
       ...(isCorrect
-        ? [prisma.user.update({
-            where: { id: req.user.id },
-            data: { totalTasksCompleted: { increment: 1 } },
-          })]
+        ? [
+            prisma.user.update({
+              where: { id: req.user.id },
+              data: { totalTasksCompleted: { increment: 1 } },
+            }),
+          ]
         : []),
     ]);
 
     await updateRanks(questId);
-    await checkAndCompleteQuest(questId, req.user.id);
 
     const updatedParticipant = await prisma.questParticipant.findUnique({
       where: { questId_userId: { questId, userId: req.user.id } },
-      select: { status: true, score: true, rank: true },
+      select: { score: true, rank: true, status: true },
     });
 
     res.json({
       submission,
       isCorrect,
       pointsAwarded,
-      questCompleted: updatedParticipant?.status === 'completed',
       currentScore: updatedParticipant?.score,
       currentRank: updatedParticipant?.rank,
+      questStatus: updatedParticipant?.status,
+      isQuestCompleted: updatedParticipant?.status === 'completed',
     });
   } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Already submitted this task' });
+    }
     res.status(500).json({ error: err.message });
   }
 }

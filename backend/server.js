@@ -41,6 +41,29 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/api', limiter);
 }
 
+app.post('/debug-auth', (req, res) => {
+  const initData = req.headers['x-telegram-init-data'] || 'MISSING';
+  const token = process.env.TELEGRAM_BOT_TOKEN || 'MISSING';
+  const crypto = require('crypto');
+  const urlParams = new URLSearchParams(initData);
+  const hash = urlParams.get('hash');
+  urlParams.delete('hash');
+  const dataCheckString = Array.from(urlParams.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('\n');
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(token).digest();
+  const computed = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+  res.json({
+    tokenLength: token.length,
+    tokenFirst10: token.substring(0, 10),
+    hashFromTelegram: hash,
+    hashComputed: computed,
+    match: hash === computed,
+    initDataLength: initData.length,
+  });
+});
+
 // Routes
 app.use('/api', routes);
 

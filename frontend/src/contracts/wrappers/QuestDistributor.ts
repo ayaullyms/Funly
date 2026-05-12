@@ -18,19 +18,33 @@ export function getContractCode(): Cell {
     for (let i = 0; i < bytes.length; i++) {
         bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     }
+
+    const data = bytes.slice(0, bytes.length - 4);
     
-    console.log('Первые 4 байта:', Array.from(bytes.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' '));
-    
-    const withoutCrc = new Uint8Array(bytes.length - 4);
-    withoutCrc.set(bytes.slice(0, bytes.length - 4));
-    
-    console.log('withoutCrc[3] до:', withoutCrc[3].toString(16));
-    withoutCrc[3] = 0x71;
-    console.log('withoutCrc[3] после:', withoutCrc[3].toString(16));
-    
+    const crcVal = crc32c(data);
+    const fixed = new Uint8Array(bytes.length);
+    fixed.set(data);
+    fixed[bytes.length - 4] = (crcVal)        & 0xff;
+    fixed[bytes.length - 3] = (crcVal >>> 8)  & 0xff;
+    fixed[bytes.length - 2] = (crcVal >>> 16) & 0xff;
+    fixed[bytes.length - 1] = (crcVal >>> 24) & 0xff;
+
+    console.log('CRC в файле (LE):', 
+        bytes[bytes.length-4].toString(16).padStart(2,'0') +
+        bytes[bytes.length-3].toString(16).padStart(2,'0') +
+        bytes[bytes.length-2].toString(16).padStart(2,'0') +
+        bytes[bytes.length-1].toString(16).padStart(2,'0')
+    );
+    console.log('CRC вычисленный (LE):', 
+        fixed[bytes.length-4].toString(16).padStart(2,'0') +
+        fixed[bytes.length-3].toString(16).padStart(2,'0') +
+        fixed[bytes.length-2].toString(16).padStart(2,'0') +
+        fixed[bytes.length-1].toString(16).padStart(2,'0')
+    );
+
     let binary = '';
-    for (let i = 0; i < withoutCrc.length; i++) {
-        binary += String.fromCharCode(withoutCrc[i]);
+    for (let i = 0; i < fixed.length; i++) {
+        binary += String.fromCharCode(fixed[i]);
     }
     return Cell.fromBase64(btoa(binary));
 }

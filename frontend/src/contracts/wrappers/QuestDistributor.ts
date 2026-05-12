@@ -97,7 +97,7 @@ export function buildDeployPayload(params: DistributorParams): DeployPayload {
     const nonce = params.nonce ?? BigInt(Date.now());
 
     if (winners.length === 0)          throw new Error('Нет победителей');
-    if (winners.length > MAX_WINNERS)  throw new Error(`Максимум ${MAX_WINNERS} победителей за одну транзакцию`);
+    if (winners.length > MAX_WINNERS)  throw new Error(`Максимум ${MAX_WINNERS} победителей`);
     if (winners.some(w => !w.address)) throw new Error('У победителя нет кошелька');
 
     const owner = Address.parse(ownerAddress);
@@ -121,8 +121,8 @@ export function buildDeployPayload(params: DistributorParams): DeployPayload {
 
     return {
         contractAddress: contractAddr.toString({ urlSafe: true, bounceable: true }),
-        stateInitBase64: stateInitCell.toBoc().toString('base64'),
-        bodyBase64:      body.toBoc().toString('base64'),
+        stateInitBase64: stateInitCell.toBoc({ crc32: false }).toString('base64'),
+        bodyBase64:      body.toBoc({ crc32: false }).toString('base64'),
         totalNano,
     };
 }

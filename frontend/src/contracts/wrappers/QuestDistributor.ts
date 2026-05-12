@@ -20,16 +20,18 @@ export function getContractCode(): Cell {
     }
     
     const data = bytes.slice(0, bytes.length - 4);
-    const crc = crc32c(data);
-    data[data.length - 4 + 0] = (crc >>> 24) & 0xff; 
+    const crcVal = crc32c(data);
+    
+    const existingCrc = ((bytes[bytes.length-4] << 24) | (bytes[bytes.length-3] << 16) | (bytes[bytes.length-2] << 8) | bytes[bytes.length-1]) >>> 0;
+    console.log('CRC в файле:', existingCrc.toString(16));
+    console.log('CRC вычисленный:', crcVal.toString(16));
     
     const fixed = new Uint8Array(bytes.length);
     fixed.set(data);
-    const crcVal = crc32c(bytes.slice(0, bytes.length - 4));
     fixed[bytes.length - 4] = (crcVal >>> 24) & 0xff;
     fixed[bytes.length - 3] = (crcVal >>> 16) & 0xff;
     fixed[bytes.length - 2] = (crcVal >>> 8)  & 0xff;
-    fixed[bytes.length - 1] = (crcVal)        & 0xff;
+    fixed[bytes.length - 1] = crcVal & 0xff;
     
     const base64 = btoa(String.fromCharCode(...fixed));
     return Cell.fromBase64(base64);

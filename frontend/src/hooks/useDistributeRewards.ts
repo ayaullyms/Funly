@@ -9,8 +9,6 @@ import {
 } from '../contracts/wrappers/QuestDistributor';
 import { api } from '../api';
 
-// ── Типы
-
 export interface PendingReward {
     id:                    string;
     questId:               string;
@@ -28,7 +26,7 @@ export type DistributeStep =
     | 'confirm'
     | 'no_wallets'
     | 'signing'
-    | 'waiting_tx'   
+    | 'waiting_tx'
     | 'success'
     | 'error';
 
@@ -37,21 +35,23 @@ export interface DistributeState {
     rewards:         PendingReward[];
     totalTon:        string;
     contractAddress: string;
-    txHash:          string;    
+    txHash:          string;
     error:           string;
     missingWallets:  string[];
     waitingSeconds:  number;
 }
-
 
 const TONCENTER_BASE = import.meta.env.VITE_TON_TESTNET === 'true'
     ? 'https://testnet.toncenter.com/api/v2'
     : 'https://toncenter.com/api/v2';
 
 function bocToHash(boc: string): string {
-   
-    const cell = Cell.fromBase64(boc);
-    return cell.hash().toString('hex');
+    try {
+        const cell = Cell.fromBase64(boc);
+        return cell.hash().toString('hex');
+    } catch {
+        return boc;
+    }
 }
 
 async function waitForTxHash(
@@ -62,6 +62,10 @@ async function waitForTxHash(
     intervalMs  = 3000
 ): Promise<string> {
     const bocHash = bocToHash(bocBase64);
+
+    if (bocHash === bocBase64) {
+        return bocBase64;
+    }
 
     for (let i = 0; i < maxAttempts; i++) {
         await new Promise(r => setTimeout(r, intervalMs));
@@ -93,7 +97,6 @@ async function waitForTxHash(
     throw new Error('Транзакция не подтверждена за 60 секунд. Проверь TonScan вручную.');
 }
 
-// ── Хук ──────────────────────────────────────────────────────────────────────
 
 export function useDistributeRewards(questId: string) {
     const wallet = useTonWallet();
@@ -134,7 +137,7 @@ export function useDistributeRewards(questId: string) {
             if (ready.length > MAX_WINNERS) {
                 set({
                     step: 'error',
-                    error: `Слишком много победителей с кошельками (${ready.length}). Максимум ${MAX_WINNERS} за одну транзакцию.`,
+                    error: `Слишком много победителей (${ready.length}). Максимум ${MAX_WINNERS}.`,
                 });
                 return;
             }
@@ -172,14 +175,18 @@ export function useDistributeRewards(questId: string) {
         set({ step: 'signing', error: '' });
 
         let payload: ReturnType<typeof buildDeployPayload>;
-        let bocResult: string;
-
         try {
             payload = buildDeployPayload({
                 ownerAddress: wallet.account.address,
                 winners,
             });
+        } catch (e: any) {
+            set({ step: 'error', error: ' Ошибка buildDeployPayload:\n' + e.message });
+            return;
+        }
 
+        let bocResult: string;
+        try {
             const result = await tonConnectUI.sendTransaction({
                 validUntil: Math.floor(Date.now() / 1000) + 600,
                 messages: [{
@@ -189,7 +196,6 @@ export function useDistributeRewards(questId: string) {
                     payload:   payload.bodyBase64,
                 }],
             });
-
             bocResult = result.boc;
         } catch (e: any) {
             if (
@@ -199,7 +205,7 @@ export function useDistributeRewards(questId: string) {
             ) {
                 set({ step: state.missingWallets.length > 0 ? 'no_wallets' : 'confirm' });
             } else {
-                set({ step: 'error', error: e.message });
+                set({ step: 'error', error: ' Ошибка sendTransaction:\n' + e.message });
             }
             return;
         }
@@ -214,7 +220,6 @@ export function useDistributeRewards(questId: string) {
                 (seconds) => set({ waitingSeconds: seconds })
             );
         } catch (e: any) {
-
             realTxHash = bocResult;
             console.warn('TX hash not found, storing BOC as fallback:', e.message);
         }
@@ -233,7 +238,7 @@ export function useDistributeRewards(questId: string) {
         } catch (e: any) {
             set({
                 step:  'error',
-                error: `Транзакция отправлена, но не сохранена в БД: ${e.message}\n` +
+                error: `Транзакция отправлена, но не сохранена в БД:\n${e.message}\n` +
                        `TX: ${realTxHash}\nКонтракт: ${payload.contractAddress}`,
             });
         }

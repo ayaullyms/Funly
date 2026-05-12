@@ -1,6 +1,6 @@
 {
-  "url": "http://localhost:5173",
+  "url": "https://funly-three.vercel.app",
   "name": "Funly",
-  "iconUrl": "http://localhost:5173/icon.png"
+  "iconUrl": "https://funly-three.vercel.app/icon.png"
 }
 

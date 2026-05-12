@@ -18,8 +18,32 @@ export function getContractCode(): Cell {
     for (let i = 0; i < bytes.length; i++) {
         bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     }
-    const base64 = btoa(String.fromCharCode(...bytes));
+    
+    const data = bytes.slice(0, bytes.length - 4);
+    const crc = crc32c(data);
+    data[data.length - 4 + 0] = (crc >>> 24) & 0xff; 
+    
+    const fixed = new Uint8Array(bytes.length);
+    fixed.set(data);
+    const crcVal = crc32c(bytes.slice(0, bytes.length - 4));
+    fixed[bytes.length - 4] = (crcVal >>> 24) & 0xff;
+    fixed[bytes.length - 3] = (crcVal >>> 16) & 0xff;
+    fixed[bytes.length - 2] = (crcVal >>> 8)  & 0xff;
+    fixed[bytes.length - 1] = (crcVal)        & 0xff;
+    
+    const base64 = btoa(String.fromCharCode(...fixed));
     return Cell.fromBase64(base64);
+}
+
+function crc32c(data: Uint8Array): number {
+    let crc = 0xffffffff;
+    for (let i = 0; i < data.length; i++) {
+        crc ^= data[i];
+        for (let j = 0; j < 8; j++) {
+            crc = (crc >>> 1) ^ (crc & 1 ? 0x82f63b78 : 0);
+        }
+    }
+    return (crc ^ 0xffffffff) >>> 0;
 }
 
 export interface WinnerEntry {

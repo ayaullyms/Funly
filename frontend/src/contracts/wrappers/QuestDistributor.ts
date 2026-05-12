@@ -18,12 +18,12 @@ const COMPILED_HEX = 'b5ee9c724102150100039f000228ff008e88f4a413f4bcf2c80bed5320
 // }
 
 export function getContractCode(): Cell {
-    const bytes = Buffer.from(COMPILED_HEX, 'hex');
-    console.log('BOC length:', bytes.length);
-    console.log('Byte[3]:', bytes[3].toString(16));
-    const patched = Buffer.from(bytes);
-    patched[3] = 0x71;
-    return Cell.fromBoc(patched)[0];
+    const hex = COMPILED_HEX;
+    const bytes = Buffer.from(hex, 'hex');
+    const withoutCrc = bytes.slice(0, bytes.length - 4);
+    withoutCrc[3] = 0x71;
+    
+    return Cell.fromBoc(withoutCrc)[0];
 }
 
 export interface WinnerEntry {

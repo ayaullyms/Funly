@@ -18,8 +18,13 @@ export function getContractCode(): Cell {
     for (let i = 0; i < bytes.length; i++) {
         bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     }
-    const base64 = btoa(String.fromCharCode(...bytes));
-    return Cell.fromBase64(base64);
+    bytes[3] = 0x71;
+    const withoutCrc = bytes.slice(0, bytes.length - 4);
+    let binary = '';
+    for (let i = 0; i < withoutCrc.length; i++) {
+        binary += String.fromCharCode(withoutCrc[i]);
+    }
+    return Cell.fromBase64(btoa(binary));
 }
 
 function crc32c(data: Uint8Array): number {

@@ -18,15 +18,7 @@ export function getContractCode(): Cell {
     for (let i = 0; i < bytes.length; i++) {
         bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     }
-    
-    const fixed = new Uint8Array(bytes.length);
-    fixed.set(bytes.slice(0, bytes.length - 4));
-    fixed[bytes.length - 4] = bytes[bytes.length - 1];
-    fixed[bytes.length - 3] = bytes[bytes.length - 2];
-    fixed[bytes.length - 2] = bytes[bytes.length - 3];
-    fixed[bytes.length - 1] = bytes[bytes.length - 4];
-    
-    const base64 = btoa(String.fromCharCode(...fixed));
+    const base64 = btoa(String.fromCharCode(...bytes));
     return Cell.fromBase64(base64);
 }
 

@@ -181,7 +181,9 @@ export function useDistributeRewards(questId: string) {
                 winners,
             });
         } catch (e: any) {
-            set({ step: 'error', error: ' Ошибка buildDeployPayload:\n' + e.message });
+            console.error('FULL ERROR:', e);
+            console.error('STACK:', e.stack);
+            set({ step: 'error', error: 'Ошибка buildDeployPayload:\n' + e.message });
             return;
         }
 

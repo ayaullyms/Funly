@@ -18,11 +18,7 @@ const COMPILED_HEX = 'b5ee9c724102150100039f000228ff008e88f4a413f4bcf2c80bed5320
 
 export function getContractCode(): Cell {
     const bytes = Buffer.from(COMPILED_HEX, 'hex');
-    try {
-        return Cell.fromBoc(bytes)[0];
-    } catch {
-        return Cell.fromBoc(bytes.slice(0, bytes.length - 4))[0];
-    }
+    return Cell.fromBoc(bytes.slice(0, bytes.length - 4))[0];
 }
 
 export interface WinnerEntry {

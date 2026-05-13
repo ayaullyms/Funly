@@ -32,13 +32,9 @@ contract QuestDistributor with Deployable {
         require(!self.distributed, "Already distributed");
         require(msg.nonce == self.nonce, "Nonce mismatch");
 
-        let gasReserve: Int = ton("0.05");
-        require(myBalance() >= self.totalReward + gasReserve, "Insufficient balance");
-
         self.distributed = true;
 
         let node: Cell? = self.winners;
-        let totalSent: Int = 0;
 
         while (node != null) {
             let s: Slice = node!!.beginParse();
@@ -46,17 +42,12 @@ contract QuestDistributor with Deployable {
             let amount: Int = s.loadCoins();
             let hasNext: Bool = s.loadBool();
 
-            let safetyBuffer: Int = ton("0.02");
-            if (myBalance() - totalSent >= amount + safetyBuffer) {
-                send(SendParameters{
-                    to: addr,
-                    value: amount,
-                    bounce: false,
-                    mode: SendPayGasSeparately,
-                    body: beginCell().storeUint(0, 32).endCell(),
-                });
-                totalSent = totalSent + amount;
-            }
+            send(SendParameters{
+                to: addr,
+                value: amount,
+                bounce: false,
+                mode: 0, 
+            });
 
             if (hasNext) {
                 node = s.loadRef();

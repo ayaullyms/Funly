@@ -156,8 +156,8 @@ export function buildDeployPayload(params: DistributorParams): DeployPayload {
 
     return {
         contractAddress: contractAddr.toString({ urlSafe: true, bounceable: true }),
-        stateInitBase64: stateInitCell.toBoc({ crc32: false }).toString('base64'),
-        bodyBase64:      body.toBoc({ crc32: false }).toString('base64'),
+        stateInitBase64: stateInitCell.toBoc().toString('base64'),
+        bodyBase64: body.toBoc().toString('base64'),
         totalNano,
     };
 }

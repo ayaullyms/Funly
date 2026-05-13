@@ -170,7 +170,6 @@ function DistributeModal({
   const { step, rewards, totalTon, missingWallets, contractAddress, txHash, error, waitingSeconds } = state;
   const readyRewards = rewards.filter(r => !!r.walletAddress);
 
-  // Ссылка на TonScan (testnet или mainnet)
   const isTestnet = import.meta.env.VITE_TON_TESTNET === 'true';
   const tonscanBase = isTestnet ? 'https://testnet.tonscan.org' : 'https://tonscan.org';
 
@@ -206,17 +205,14 @@ function DistributeModal({
           <TonBadge />
         </div>
 
-        {/* ── Загрузка ── */}
         {step === 'loading' && (
           <div style={{ textAlign: 'center', padding: '2rem 0', color: C.muted, fontSize: 13 }}>
             Loading rewards...
           </div>
         )}
 
-        {/* ── Список + подтверждение ── */}
         {(step === 'confirm' || step === 'no_wallets') && (
           <>
-            {/* Предупреждение о кошельках */}
             {missingWallets.length > 0 && (
               <div style={{ background: 'rgba(251,191,36,0.07)', border: '0.5px solid rgba(251,191,36,0.25)', borderRadius: 10, padding: '10px 13px' }}>
                 <div style={{ fontSize: 10, color: C.amber, fontWeight: 700, marginBottom: 4 }}>⚠️ No wallet connected</div>
@@ -226,7 +222,6 @@ function DistributeModal({
               </div>
             )}
 
-            {/* Список победителей */}
             {readyRewards.length > 0 ? (
               <div style={{ background: C.bg3, border: `0.5px solid ${C.border}`, borderRadius: 10, overflow: 'hidden' }}>
                 <div style={{ padding: '8px 12px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', justifyContent: 'space-between' }}>
@@ -263,7 +258,6 @@ function DistributeModal({
               </div>
             )}
 
-            {/* Итого */}
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               background: 'rgba(0,152,234,0.07)', border: '0.5px solid rgba(0,152,234,0.2)',
@@ -277,7 +271,6 @@ function DistributeModal({
               </div>
             </div>
 
-            {/* Кошелёк */}
             {wallet ? (
               <div style={{ fontSize: 10, color: C.muted, textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace' }}>
                 Sending from: {wallet.account.address.slice(0, 8)}...{wallet.account.address.slice(-6)}
@@ -302,7 +295,6 @@ function DistributeModal({
           </>
         )}
 
-        {/* ── Ожидание подписи ── */}
         {step === 'signing' && (
           <div style={{ textAlign: 'center', padding: '2rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
             <Spinner color={C.ton} />
@@ -311,7 +303,6 @@ function DistributeModal({
           </div>
         )}
 
-        {/* ── Ожидание подтверждения в блокчейне ── */}
         {step === 'waiting_tx' && (
           <div style={{ textAlign: 'center', padding: '2rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
             <Spinner color={C.green} />
@@ -321,7 +312,6 @@ function DistributeModal({
           </div>
         )}
 
-        {/* ── Успех ── */}
         {step === 'success' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ textAlign: 'center', fontSize: 40, marginBottom: 4 }}>🎉</div>
@@ -365,7 +355,6 @@ function DistributeModal({
           </div>
         )}
 
-        {/* ── Ошибка ── */}
         {step === 'error' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{
@@ -383,7 +372,7 @@ function DistributeModal({
   );
 }
 
-// ── Quest Row ─────────────────────────────────────────────────────────────────
+// Quest Row
 
 interface RowProps {
   quest: Quest;
@@ -436,12 +425,31 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
         )}
 
         {q.status === 'completed' && (
-          <button
-            onClick={onDistribute}
-            style={{ ...ghostBtnSt, color: C.ton, background: 'rgba(0,152,234,0.08)', border: '0.5px solid rgba(0,152,234,0.25)' }}
-          >
-            <TonIcon /> <span style={{ marginLeft: 4 }}>Distribute TON</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {(q.pendingRewards ?? 0) > 0 && (
+              <button
+                onClick={onDistribute}
+                style={{ ...ghostBtnSt, color: C.ton, background: 'rgba(0,152,234,0.08)', border: '0.5px solid rgba(0,152,234,0.25)' }}
+              >
+                <TonIcon /> <span style={{ marginLeft: 4 }}>
+                  Distribute TON {q.pendingRewards && q.pendingRewards > 0 ? `(${q.pendingRewards})` : ''}
+                </span>
+              </button>
+            )}
+
+            {(q.pendingRewards ?? 0) === 0 && (q.distributedRewards ?? 0) > 0 && (
+              <span style={{
+                fontSize: 10, color: C.green,
+                background: 'rgba(74,222,128,0.08)',
+                border: '0.5px solid rgba(74,222,128,0.25)',
+                borderRadius: 7, padding: '6px 10px',
+                fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600,
+              }}>
+                ✓ TON Sent ({q.distributedRewards})
+              </span>
+            )}
+
+          </div>
         )}
 
         {q.status === 'draft' && (
@@ -479,7 +487,6 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
   );
 }
 
-// ── Мелкие компоненты ─────────────────────────────────────────────────────────
 
 function TabButton({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
   return (

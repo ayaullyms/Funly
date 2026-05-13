@@ -1,3 +1,4 @@
+//quest-contacts/contracts/quest_distributor.tact
 import "@stdlib/deploy";
 
 message(0x4d5f7b8a) Distribute {
@@ -27,11 +28,11 @@ contract QuestDistributor with Deployable {
     }
 
     receive(msg: Distribute) {
-        require(sender() == self.owner,"Only owner");
+        require(sender() == self.owner, "Only owner");
         require(!self.distributed, "Already distributed");
         require(msg.nonce == self.nonce, "Nonce mismatch");
 
-        let gasReserve: Int = ton("0.3");
+        let gasReserve: Int = ton("0.05");
         require(myBalance() >= self.totalReward + gasReserve, "Insufficient balance");
 
         self.distributed = true;
@@ -41,12 +42,11 @@ contract QuestDistributor with Deployable {
 
         while (node != null) {
             let s: Slice = node!!.beginParse();
-
             let addr: Address = s.loadAddress();
             let amount: Int = s.loadCoins();
             let hasNext: Bool = s.loadBool();
 
-            let safetyBuffer: Int = ton("0.05");
+            let safetyBuffer: Int = ton("0.02");
             if (myBalance() - totalSent >= amount + safetyBuffer) {
                 send(SendParameters{
                     to: addr,
@@ -64,18 +64,6 @@ contract QuestDistributor with Deployable {
                 node = null;
             }
         }
-
-        send(SendParameters{
-            to:     self.owner,
-            value:  0,
-            bounce: false,
-            mode:   SendRemainingBalance | SendIgnoreErrors,
-        });
-    }
-
-    receive(msg: EmergencyWithdraw) {
-        require(sender() == self.owner, "Only owner");
-        require(!self.distributed, "Already distributed, cannot withdraw");
 
         send(SendParameters{
             to:     self.owner,

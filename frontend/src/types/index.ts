@@ -29,6 +29,8 @@ export interface Quest {
   participantsCount?: number;
   totalTasks?: number;
   rewardAmountPerWinner?: number | null;
+  pendingRewards?:    number;
+  distributedRewards?: number;
   winnersCount?: number; 
   // joined user fields
   isJoined?: boolean;

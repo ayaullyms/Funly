@@ -1,3 +1,4 @@
+//frontend/src/hooks/useDistributeRewards.ts
 import { useState, useCallback } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Cell } from '@ton/core';
@@ -222,8 +223,15 @@ export function useDistributeRewards(questId: string) {
                 (seconds) => set({ waitingSeconds: seconds })
             );
         } catch (e: any) {
-            realTxHash = bocResult;
-            console.warn('TX hash not found, storing BOC as fallback:', e.message);
+            const isTestnet = import.meta.env.VITE_TON_TESTNET === 'true';
+            const tonscanBase = isTestnet ? 'https://testnet.tonscan.org' : 'https://tonscan.org';
+            set({
+                step: 'error',
+                error: `Transaction was sent but was not confirmed within 60 seconds.\n` +
+                    `Please check it manually here: ${tonscanBase}/address/${payload.contractAddress}\n` +
+                    `If the transaction was successful, click Retry — the transaction hash should be detected automatically.`,
+            });
+            return;
         }
 
         try {
@@ -231,7 +239,6 @@ export function useDistributeRewards(questId: string) {
                 transactionHash: realTxHash,
                 contractAddress: payload.contractAddress,
             });
-
             set({
                 step:            'success',
                 contractAddress: payload.contractAddress,
@@ -240,8 +247,8 @@ export function useDistributeRewards(questId: string) {
         } catch (e: any) {
             set({
                 step:  'error',
-                error: `Транзакция отправлена, но не сохранена в БД:\n${e.message}\n` +
-                       `TX: ${realTxHash}\nКонтракт: ${payload.contractAddress}`,
+                error: `Transaction was sent, but not saved to DB:\n${e.message}\n` +
+                    `TX: ${realTxHash}`,
             });
         }
     }, [state.rewards, state.missingWallets, wallet, tonConnectUI, questId]);

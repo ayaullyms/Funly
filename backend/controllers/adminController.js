@@ -6,10 +6,25 @@ async function getAdminQuests(req, res) {
   try {
     const quests = await prisma.quest.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { tasks: true } } },
+      include: {
+        _count: { select: { tasks: true } },
+        rewards: { select: { status: true } },  
+      },
     });
+
     res.json({
-      quests: quests.map(q => ({ ...q, totalTasks: q._count.tasks, _count: undefined })),
+      quests: quests.map(q => {
+        const pendingRewards    = q.rewards.filter(r => r.status === 'pending' || r.status === 'processing').length;
+        const distributedRewards = q.rewards.filter(r => r.status === 'distributed').length;
+        return {
+          ...q,
+          totalTasks: q._count.tasks,
+          pendingRewards,       
+          distributedRewards,    
+          _count: undefined,
+          rewards: undefined,
+        };
+      }),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -374,9 +389,11 @@ async function distributeQuestRewards(req, res) {
 
 
 async function verifyTonTransaction(txHash, contractAddress) {
+  if (!txHash || txHash.length > 100) return false;
+
   try {
     const isTestnet = process.env.TON_TESTNET === 'true';
-    const base      = isTestnet
+    const base = isTestnet
       ? 'https://testnet.toncenter.com/api/v2'
       : 'https://toncenter.com/api/v2';
 
@@ -384,63 +401,98 @@ async function verifyTonTransaction(txHash, contractAddress) {
     const headers = apiKey ? { 'X-API-Key': apiKey } : {};
 
     const url = `${base}/getTransactions?address=${encodeURIComponent(contractAddress)}&limit=10`;
-    const res  = await fetch(url, { headers });
+    const res = await fetch(url, { headers });
 
     if (!res.ok) return false;
 
     const data = await res.json();
-    const txs  = data.result || [];
+    const txs = data.result || [];
 
-    return txs.some(tx =>
+    const found = txs.find(tx =>
       tx.transaction_id?.hash === txHash ||
-      tx.in_msg?.body_hash   === txHash
+      tx.in_msg?.body_hash === txHash
     );
-  } catch (err) {
-    console.error('TonCenter verification error:', err.message);
+
+    if (!found) return false;
+
+    const computeExitCode = found.description?.compute_ph?.exit_code;
+    const actionResultCode = found.description?.action?.result_code;
+
+    if (computeExitCode !== undefined && computeExitCode !== 0) {
+      console.warn(`TX failed: compute exit_code=${computeExitCode}`);
+      return false;
+    }
+    if (actionResultCode !== undefined && actionResultCode !== 0) {
+      console.warn(`TX failed: action result_code=${actionResultCode}`);
+      return false;
+    }
 
     return true;
+  } catch (err) {
+    console.error('TonCenter verification error:', err.message);
+    return false; 
   }
 }
 
 
-async function distributeReward(req, res) {
+async function distributeQuestRewards(req, res) {
   try {
-    const { rewardId } = req.params;
+    const { id } = req.params;
     const { transactionHash, contractAddress } = req.body;
 
     if (!transactionHash) {
       return res.status(400).json({ error: 'transactionHash is required' });
     }
-
-    const { count } = await prisma.reward.updateMany({
-      where: { id: rewardId, status: { in: ['pending', 'processing'] } },
-      data: {
-        status: 'distributed',
-        transactionHash,
-        distributedAt: new Date(),
-        ...(contractAddress ? { contractAddress } : {}),
-      },
-    });
-
-    if (count === 0) {
-      return res.status(400).json({ error: 'Reward already distributed or not found' });
+    if (!contractAddress) {
+      return res.status(400).json({ error: 'contractAddress is required' });
     }
 
-    const reward = await prisma.reward.findUnique({ where: { id: rewardId } });
-    if (!reward) return res.status(404).json({ error: 'Reward not found after update' });
+    if (transactionHash.length > 100) {
+      return res.status(400).json({
+        error: 'Transaction not confirmed yet. Wait and retry.',
+      });
+    }
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: reward.userId },
-        data: { totalRewardsAmount: { increment: reward.amount } },
-      }),
-      prisma.questParticipant.updateMany({
-        where: { questId: reward.questId, userId: reward.userId },
+    const isVerified = await verifyTonTransaction(transactionHash, contractAddress);
+    if (!isVerified) {
+      return res.status(400).json({
+        error: 'Transaction not found or failed on blockchain. Check TonScan.',
+      });
+    }
+
+    const rewards = await prisma.reward.findMany({
+      where: { questId: id, status: { in: ['pending', 'processing'] } },
+    });
+
+    if (rewards.length === 0) {
+      return res.status(400).json({ error: 'No pending rewards found for this quest' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.reward.updateMany({
+        where: { questId: id, status: { in: ['pending', 'processing'] } },
+        data: {
+          status: 'distributed',
+          transactionHash,
+          contractAddress,
+          distributedAt: new Date(),
+        },
+      });
+
+      for (const reward of rewards) {
+        await tx.user.update({
+          where: { id: reward.userId },
+          data: { totalRewardsAmount: { increment: reward.amount } },
+        });
+      }
+
+      await tx.questParticipant.updateMany({
+        where: { questId: id, isWinner: true },
         data: { rewardClaimed: true },
-      }),
-    ]);
+      });
+    });
 
-    res.json({ reward: { ...reward, amount: reward.amount.toString() } });
+    res.json({ ok: true, distributed: rewards.length, transactionHash, contractAddress });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

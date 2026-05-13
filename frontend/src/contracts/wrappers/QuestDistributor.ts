@@ -14,39 +14,43 @@ import {
 const COMPILED_HEX = 'b5ee9c72410213010002ec0004feff008e88f4a413f4bcf2c80bed53208f6b3001d072d721d200d200fa4021103450666f04f86102f862ed44d0d200019efa40d33fd200fa00f40455406c158e16fa40810101d700f404810101d700553004d155027002e206925f06e004d70d1ff2e0822182104d5f7b8abae302018210946a98b6bae3025f06f2c082e1ed43010f1112020271020702015803050169b4a3bda89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a30040002240169b6df3da89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a3006000222020120080d020120090b0169b6d81da89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a300a0008f8276f100169b72b1da89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a300c0002230169b9718ed44d0d200019efa40d33fd200fa00f40455406c158e16fa40810101d700f404810101d700553004d155027002e2db3c6c5180e00022101fe31d33f3082008aabf84225c705f2f481235a02b312f2f48200acd45112baf2f47f2493206eb38e4f206ef2d080d0fa40fa00d2005a7070036d6d50436d5033c8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb000192d43092306de2e8302270708100821000a2036d6d50436d5033c8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb004034c87f01ca0055405045ce12cb3fca0001fa02f400c9ed54009ed33f30c8018210aff90f5758cb1fcb3fc910354430f84270705003804201503304c8cf8580ca00cf8440ce01fa02806acf40f400c901fb00c87f01ca0055405045ce12cb3fca0001fa02f400c9ed540002d960f8e4b2';
 
 export function getContractCode(): Cell {
-    const hex = COMPILED_HEX;
-    const bytes = new Uint8Array(hex.length / 2);
-    for (let i = 0; i < bytes.length; i++) {
-        bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-    }
+    return Cell.fromHex(COMPILED_HEX);
+}
 
-    const data = bytes.slice(0, bytes.length - 4);
+// export function getContractCode(): Cell {
+//     const hex = COMPILED_HEX;
+//     const bytes = new Uint8Array(hex.length / 2);
+//     for (let i = 0; i < bytes.length; i++) {
+//         bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+//     }
+
+//     const data = bytes.slice(0, bytes.length - 4);
     
-    const crcVal = crc32c(data);
-    const fixed = new Uint8Array(bytes.length);
-    fixed.set(data);
-    fixed[bytes.length - 4] = (crcVal)        & 0xff;
-    fixed[bytes.length - 3] = (crcVal >>> 8)  & 0xff;
-    fixed[bytes.length - 2] = (crcVal >>> 16) & 0xff;
-    fixed[bytes.length - 1] = (crcVal >>> 24) & 0xff;
+//     const crcVal = crc32c(data);
+//     const fixed = new Uint8Array(bytes.length);
+//     fixed.set(data);
+//     fixed[bytes.length - 4] = (crcVal)        & 0xff;
+//     fixed[bytes.length - 3] = (crcVal >>> 8)  & 0xff;
+//     fixed[bytes.length - 2] = (crcVal >>> 16) & 0xff;
+//     fixed[bytes.length - 1] = (crcVal >>> 24) & 0xff;
 
-    let binary = '';
-    for (let i = 0; i < fixed.length; i++) {
-        binary += String.fromCharCode(fixed[i]);
-    }
-    return Cell.fromBase64(btoa(binary));
-}
+//     let binary = '';
+//     for (let i = 0; i < fixed.length; i++) {
+//         binary += String.fromCharCode(fixed[i]);
+//     }
+//     return Cell.fromBase64(btoa(binary));
+// }
 
-function crc32c(data: Uint8Array): number {
-    let crc = 0xffffffff;
-    for (let i = 0; i < data.length; i++) {
-        crc ^= data[i];
-        for (let j = 0; j < 8; j++) {
-            crc = (crc >>> 1) ^ (crc & 1 ? 0x82f63b78 : 0);
-        }
-    }
-    return (crc ^ 0xffffffff) >>> 0;
-}
+// function crc32c(data: Uint8Array): number {
+//     let crc = 0xffffffff;
+//     for (let i = 0; i < data.length; i++) {
+//         crc ^= data[i];
+//         for (let j = 0; j < 8; j++) {
+//             crc = (crc >>> 1) ^ (crc & 1 ? 0x82f63b78 : 0);
+//         }
+//     }
+//     return (crc ^ 0xffffffff) >>> 0;
+// }
 
 export interface WinnerEntry {
     address: string;  

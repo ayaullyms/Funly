@@ -177,9 +177,6 @@ export function useDistributeRewards(questId: string) {
 
         let payload: ReturnType<typeof buildDeployPayload>;
         try {
-            console.log('OWNER:', wallet.account.address);
-            console.log('WINNERS:', JSON.stringify(winners));
-            
             payload = buildDeployPayload({
                 ownerAddress: wallet.account.address,
                 winners,

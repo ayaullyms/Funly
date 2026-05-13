@@ -149,7 +149,7 @@ export function buildDeployPayload(params: DistributorParams): DeployPayload {
     const totalNano =
         winners.reduce((sum, w) => sum + toNano(w.amount), 0n) +
         BigInt(winners.length) * toNano('0.05') +
-        toNano('0.15');
+        toNano('0.35');
 
     return {
         contractAddress: contractAddr.toString({ urlSafe: true, bounceable: true }),

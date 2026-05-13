@@ -426,18 +426,18 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
 
         {q.status === 'completed' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {(q.pendingRewards ?? 0) > 0 && (
+            {(q.pendingRewards === undefined || q.pendingRewards > 0) && (
               <button
                 onClick={onDistribute}
                 style={{ ...ghostBtnSt, color: C.ton, background: 'rgba(0,152,234,0.08)', border: '0.5px solid rgba(0,152,234,0.25)' }}
               >
                 <TonIcon /> <span style={{ marginLeft: 4 }}>
-                  Distribute TON {q.pendingRewards && q.pendingRewards > 0 ? `(${q.pendingRewards})` : ''}
+                  Distribute TON{q.pendingRewards != null ? ` (${q.pendingRewards})` : ''}
                 </span>
               </button>
             )}
 
-            {(q.pendingRewards ?? 0) === 0 && (q.distributedRewards ?? 0) > 0 && (
+            {q.pendingRewards === 0 && (q.distributedRewards ?? 0) > 0 && (
               <span style={{
                 fontSize: 10, color: C.green,
                 background: 'rgba(74,222,128,0.08)',

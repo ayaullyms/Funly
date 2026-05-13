@@ -320,74 +320,6 @@ async function getPendingRewards(req, res) {
   }
 }
 
-
-async function distributeQuestRewards(req, res) {
-  try {
-    const { id } = req.params;
-    const { transactionHash, contractAddress } = req.body;
-
-    if (!transactionHash) {
-      return res.status(400).json({ error: 'transactionHash is required' });
-    }
-    if (!contractAddress) {
-      return res.status(400).json({ error: 'contractAddress is required' });
-    }
-
-    const isVerified = await verifyTonTransaction(transactionHash, contractAddress);
-    if (!isVerified) {
-      const isBoc = transactionHash.length > 100;
-      if (!isBoc) {
-        return res.status(400).json({
-          error: 'Transaction not found on blockchain. Wait a few seconds and try again.',
-        });
-      }
-      console.warn(`Storing BOC as txHash fallback for quest ${id}`);
-    }
-
-    const rewards = await prisma.reward.findMany({
-      where: { questId: id, status: { in: ['pending', 'processing'] } },
-    });
-
-    if (rewards.length === 0) {
-      return res.status(400).json({ error: 'No pending rewards found for this quest' });
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.reward.updateMany({
-        where: { questId: id, status: { in: ['pending', 'processing'] } },
-        data: {
-          status: 'distributed',
-          transactionHash,
-          contractAddress,
-          distributedAt: new Date(),
-        },
-      });
-
-      for (const reward of rewards) {
-        await tx.user.update({
-          where: { id: reward.userId },
-          data: { totalRewardsAmount: { increment: reward.amount } },
-        });
-      }
-
-      await tx.questParticipant.updateMany({
-        where: { questId: id, isWinner: true },
-        data: { rewardClaimed: true },
-      });
-    });
-
-    res.json({
-      ok: true,
-      distributed: rewards.length,
-      transactionHash,
-      contractAddress,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
-
-
 async function verifyTonTransaction(txHash, contractAddress) {
   if (!txHash || txHash.length > 100) return false;
 
@@ -493,6 +425,49 @@ async function distributeQuestRewards(req, res) {
     });
 
     res.json({ ok: true, distributed: rewards.length, transactionHash, contractAddress });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function distributeReward(req, res) {
+  try {
+    const { rewardId } = req.params;
+    const { transactionHash, contractAddress } = req.body;
+
+    if (!transactionHash) {
+      return res.status(400).json({ error: 'transactionHash is required' });
+    }
+
+    const { count } = await prisma.reward.updateMany({
+      where: { id: rewardId, status: { in: ['pending', 'processing'] } },
+      data: {
+        status: 'distributed',
+        transactionHash,
+        distributedAt: new Date(),
+        ...(contractAddress ? { contractAddress } : {}),
+      },
+    });
+
+    if (count === 0) {
+      return res.status(400).json({ error: 'Reward already distributed or not found' });
+    }
+
+    const reward = await prisma.reward.findUnique({ where: { id: rewardId } });
+    if (!reward) return res.status(404).json({ error: 'Reward not found after update' });
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: reward.userId },
+        data: { totalRewardsAmount: { increment: reward.amount } },
+      }),
+      prisma.questParticipant.updateMany({
+        where: { questId: reward.questId, userId: reward.userId },
+        data: { rewardClaimed: true },
+      }),
+    ]);
+
+    res.json({ reward: { ...reward, amount: reward.amount.toString() } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

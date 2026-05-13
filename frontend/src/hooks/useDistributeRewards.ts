@@ -102,7 +102,7 @@ async function waitForTxHash(
 export function useDistributeRewards(questId: string) {
     const wallet = useTonWallet();
     const [tonConnectUI] = useTonConnectUI();
-    const nonceRef = useRef<bigint>(BigInt(Date.now()));
+    const nonceRef = useRef<bigint>(12345n);
 
     const [state, setState] = useState<DistributeState>({
         step:            'idle',

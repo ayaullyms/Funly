@@ -1,5 +1,5 @@
 //frontend/src/hooks/useDistributeRewards.ts
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Cell } from '@ton/core';
 import {
@@ -102,6 +102,7 @@ async function waitForTxHash(
 export function useDistributeRewards(questId: string) {
     const wallet = useTonWallet();
     const [tonConnectUI] = useTonConnectUI();
+    const nonceRef = useRef<bigint>(BigInt(Date.now()));
 
     const [state, setState] = useState<DistributeState>({
         step:            'idle',
@@ -180,6 +181,7 @@ export function useDistributeRewards(questId: string) {
             payload = buildDeployPayload({
                 ownerAddress: wallet.account.address,
                 winners,
+                nonce: nonceRef.current,
             });
         } catch (e: any) {
             console.error('FULL ERROR:', e);

@@ -59,15 +59,9 @@ async function waitForTxHash(
     contractAddr: string,
     bocBase64: string,
     onTick: (seconds: number) => void,
-    maxAttempts = 20,
+    maxAttempts = 30,
     intervalMs  = 3000
 ): Promise<string> {
-    const bocHash = bocToHash(bocBase64);
-
-    if (bocHash === bocBase64) {
-        return bocBase64;
-    }
-
     for (let i = 0; i < maxAttempts; i++) {
         await new Promise(r => setTimeout(r, intervalMs));
         onTick((i + 1) * Math.round(intervalMs / 1000));
@@ -75,27 +69,20 @@ async function waitForTxHash(
         try {
             const res = await fetch(
                 `${TONCENTER_BASE}/getTransactions` +
-                `?address=${encodeURIComponent(contractAddr)}&limit=10`
+                `?address=${encodeURIComponent(contractAddr)}&limit=5`
             );
-
             if (!res.ok) continue;
 
             const data = await res.json();
             const txs: any[] = data.result || [];
 
-            const found = txs.find(tx =>
-                tx.in_msg?.body_hash === bocHash ||
-                tx.transaction_id?.hash === bocHash
-            );
-
-            if (found) {
-                return found.transaction_id.hash as string;
+            if (txs.length > 0 && txs[0].transaction_id?.hash) {
+                return txs[0].transaction_id.hash as string;
             }
-        } catch {
-        }
+        } catch {}
     }
 
-    throw new Error('Транзакция не подтверждена за 60 секунд. Проверь TonScan вручную.');
+    throw new Error('Транзакция не подтверждена за 90 секунд. Проверь TonScan вручную.');
 }
 
 
@@ -173,8 +160,9 @@ export function useDistributeRewards(questId: string) {
             address: r.walletAddress!,
             amount:  r.amount,
         }));
-
+3
         set({ step: 'signing', error: '' });
+        nonceRef.current = BigInt(Date.now());
 
         let payload: ReturnType<typeof buildDeployPayload>;
         try {

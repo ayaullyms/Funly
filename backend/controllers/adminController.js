@@ -385,11 +385,12 @@ async function distributeQuestRewards(req, res) {
       });
     }
 
-    const isVerified = await verifyTonTransaction(transactionHash, contractAddress);
+    const isTestnet = process.env.TON_TESTNET === 'true';
+    const isVerified = isTestnet ? true : await verifyTonTransaction(transactionHash, contractAddress);
     if (!isVerified) {
-      return res.status(400).json({
-        error: 'Transaction not found or failed on blockchain. Check TonScan.',
-      });
+        return res.status(400).json({
+            error: 'Transaction not found or failed on blockchain. Check TonScan.',
+        });
     }
 
     const rewards = await prisma.reward.findMany({

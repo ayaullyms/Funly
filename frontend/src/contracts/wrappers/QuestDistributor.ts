@@ -17,41 +17,6 @@ export function getContractCode(): Cell {
     return Cell.fromHex(COMPILED_HEX);
 }
 
-// export function getContractCode(): Cell {
-//     const hex = COMPILED_HEX;
-//     const bytes = new Uint8Array(hex.length / 2);
-//     for (let i = 0; i < bytes.length; i++) {
-//         bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-//     }
-
-//     const data = bytes.slice(0, bytes.length - 4);
-    
-//     const crcVal = crc32c(data);
-//     const fixed = new Uint8Array(bytes.length);
-//     fixed.set(data);
-//     fixed[bytes.length - 4] = (crcVal)        & 0xff;
-//     fixed[bytes.length - 3] = (crcVal >>> 8)  & 0xff;
-//     fixed[bytes.length - 2] = (crcVal >>> 16) & 0xff;
-//     fixed[bytes.length - 1] = (crcVal >>> 24) & 0xff;
-
-//     let binary = '';
-//     for (let i = 0; i < fixed.length; i++) {
-//         binary += String.fromCharCode(fixed[i]);
-//     }
-//     return Cell.fromBase64(btoa(binary));
-// }
-
-// function crc32c(data: Uint8Array): number {
-//     let crc = 0xffffffff;
-//     for (let i = 0; i < data.length; i++) {
-//         crc ^= data[i];
-//         for (let j = 0; j < 8; j++) {
-//             crc = (crc >>> 1) ^ (crc & 1 ? 0x82f63b78 : 0);
-//         }
-//     }
-//     return (crc ^ 0xffffffff) >>> 0;
-// }
-
 export interface WinnerEntry {
     address: string;  
     amount:  string;  

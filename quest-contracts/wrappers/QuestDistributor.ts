@@ -18,21 +18,21 @@ export function getContractCode(): Cell {
 
 
 export interface WinnerEntry {
-    address: string;  
-    amount:  string;  
+    address: string;
+    amount: string;
 }
 
 export interface DistributorParams {
     ownerAddress: string;
-    winners:      WinnerEntry[];
-    nonce?:       bigint;    
+    winners: WinnerEntry[];
+    nonce?: bigint;
 }
 
 export interface DeployPayload {
     contractAddress: string;
     stateInitBase64: string;
-    bodyBase64:      string;
-    totalNano:       bigint;
+    bodyBase64: string;
+    totalNano: bigint;
 }
 
 export function buildWinnersCell(winners: WinnerEntry[]): Cell | null {
@@ -62,19 +62,17 @@ export function buildWinnersCell(winners: WinnerEntry[]): Cell | null {
 
 
 export function buildContractData(
-    owner:   Address,
-    nonce:   bigint,
+    owner: Address,
+    nonce: bigint,
     winners: WinnerEntry[]
 ): Cell {
     const winnersCell = buildWinnersCell(winners);
-    const totalNano   = winners.reduce((s, w) => s + toNano(w.amount), 0n);
 
     return beginCell()
+        .storeBit(false) // Contract is not initialized yet
         .storeAddress(owner)
-        .storeUint(nonce, 64)
-        .storeBit(false)         
-        .storeCoins(totalNano)   
-        .storeMaybeRef(winnersCell) 
+        .storeInt(nonce, 257) // init() arg 'nonce' is 257 bits
+        .storeMaybeRef(winnersCell)
         .endCell();
 }
 
@@ -91,19 +89,19 @@ export function buildWithdrawBody(): Cell {
         .endCell();
 }
 
-const MAX_WINNERS = 30; 
+const MAX_WINNERS = 30;
 
 export function buildDeployPayload(params: DistributorParams): DeployPayload {
     const { ownerAddress, winners } = params;
     const nonce = params.nonce ?? BigInt(Date.now());
 
-    if (winners.length === 0)          throw new Error('Нет победителей');
-    if (winners.length > MAX_WINNERS)  throw new Error(`Максимум ${MAX_WINNERS} победителей за одну транзакцию`);
+    if (winners.length === 0) throw new Error('Нет победителей');
+    if (winners.length > MAX_WINNERS) throw new Error(`Максимум ${MAX_WINNERS} победителей за одну транзакцию`);
     if (winners.some(w => !w.address)) throw new Error('У победителя нет кошелька');
 
     const owner = Address.parse(ownerAddress);
-    const code  = getContractCode();
-    const data  = buildContractData(owner, nonce, winners);
+    const code = getContractCode();
+    const data = buildContractData(owner, nonce, winners);
 
     const stateInit: StateInit = { code, data };
 
@@ -123,7 +121,7 @@ export function buildDeployPayload(params: DistributorParams): DeployPayload {
     return {
         contractAddress: contractAddr.toString({ urlSafe: true, bounceable: true }),
         stateInitBase64: stateInitCell.toBoc().toString('base64'),
-        bodyBase64:      body.toBoc().toString('base64'),
+        bodyBase64: body.toBoc().toString('base64'),
         totalNano,
     };
 }

@@ -1,4 +1,4 @@
-//frontend/src/contracts/wrappers/QuestDistributor.ts
+//quest-contracts/wrappers/QuestDistributor.ts
 import {
     Address,
     Cell,
@@ -10,29 +10,29 @@ import {
     type StateInit,
 } from '@ton/core';
 
-
 const COMPILED_HEX = 'b5ee9c72410213010002ec0004feff008e88f4a413f4bcf2c80bed53208f6b3001d072d721d200d200fa4021103450666f04f86102f862ed44d0d200019efa40d33fd200fa00f40455406c158e16fa40810101d700f404810101d700553004d155027002e206925f06e004d70d1ff2e0822182104d5f7b8abae302018210946a98b6bae3025f06f2c082e1ed43010f1112020271020702015803050169b4a3bda89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a30040002240169b6df3da89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a3006000222020120080d020120090b0169b6d81da89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a300a0008f8276f100169b72b1da89a1a400033df481a67fa401f401e808aa80d82b1c2df481020203ae01e809020203ae00aa6009a2aa04e005c5b678d8a300c0002230169b9718ed44d0d200019efa40d33fd200fa00f40455406c158e16fa40810101d700f404810101d700553004d155027002e2db3c6c5180e00022101fe31d33f3082008aabf84225c705f2f481235a02b312f2f48200acd45112baf2f47f2493206eb38e4f206ef2d080d0fa40fa00d2005a7070036d6d50436d5033c8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb000192d43092306de2e8302270708100821000a2036d6d50436d5033c8cf8580ca00cf8440ce01fa028069cf40025c6e016eb0935bcf819d58cf8680cf8480f400f400cf81e2f400c901fb004034c87f01ca0055405045ce12cb3fca0001fa02f400c9ed54009ed33f30c8018210aff90f5758cb1fcb3fc910354430f84270705003804201503304c8cf8580ca00cf8440ce01fa02806acf40f400c901fb00c87f01ca0055405045ce12cb3fca0001fa02f400c9ed540002d960f8e4b2';
 
 export function getContractCode(): Cell {
     return Cell.fromHex(COMPILED_HEX);
 }
 
+
 export interface WinnerEntry {
-    address: string;  
-    amount:  string;  
+    address: string;
+    amount: string;
 }
 
 export interface DistributorParams {
     ownerAddress: string;
-    winners:      WinnerEntry[];
-    nonce?:       bigint;    
+    winners: WinnerEntry[];
+    nonce?: bigint;
 }
 
 export interface DeployPayload {
     contractAddress: string;
     stateInitBase64: string;
-    bodyBase64:      string;
-    totalNano:       bigint;
+    bodyBase64: string;
+    totalNano: bigint;
 }
 
 export function buildWinnersCell(winners: WinnerEntry[]): Cell | null {
@@ -62,19 +62,17 @@ export function buildWinnersCell(winners: WinnerEntry[]): Cell | null {
 
 
 export function buildContractData(
-    owner:   Address,
-    nonce:   bigint,
+    owner: Address,
+    nonce: bigint,
     winners: WinnerEntry[]
 ): Cell {
     const winnersCell = buildWinnersCell(winners);
-    const totalNano   = winners.reduce((s, w) => s + toNano(w.amount), 0n);
 
     return beginCell()
+        .storeBit(false) // Contract is not initialized yet
         .storeAddress(owner)
-        .storeUint(nonce, 64)
-        .storeBit(false)         
-        .storeCoins(totalNano)   
-        .storeMaybeRef(winnersCell) 
+        .storeInt(nonce, 257) // init() arg 'nonce' is 257 bits
+        .storeMaybeRef(winnersCell)
         .endCell();
 }
 
@@ -91,19 +89,19 @@ export function buildWithdrawBody(): Cell {
         .endCell();
 }
 
-const MAX_WINNERS = 30; 
+const MAX_WINNERS = 30;
 
 export function buildDeployPayload(params: DistributorParams): DeployPayload {
     const { ownerAddress, winners } = params;
     const nonce = params.nonce ?? BigInt(Date.now());
 
-    if (winners.length === 0)          throw new Error('Нет победителей');
-    if (winners.length > MAX_WINNERS)  throw new Error(`Максимум ${MAX_WINNERS} победителей`);
+    if (winners.length === 0) throw new Error('Нет победителей');
+    if (winners.length > MAX_WINNERS) throw new Error(`Максимум ${MAX_WINNERS} победителей за одну транзакцию`);
     if (winners.some(w => !w.address)) throw new Error('У победителя нет кошелька');
 
     const owner = Address.parse(ownerAddress);
-    const code  = getContractCode();
-    const data  = buildContractData(owner, nonce, winners);
+    const code = getContractCode();
+    const data = buildContractData(owner, nonce, winners);
 
     const stateInit: StateInit = { code, data };
 
@@ -117,7 +115,8 @@ export function buildDeployPayload(params: DistributorParams): DeployPayload {
 
     const totalNano =
         winners.reduce((sum, w) => sum + toNano(w.amount), 0n) +
-        toNano('0.2');
+        BigInt(winners.length) * toNano('0.05') +
+        toNano('0.1');
 
     return {
         contractAddress: contractAddr.toString({ urlSafe: true, bounceable: true }),

@@ -38,7 +38,7 @@ export function AdminPage({ onOpenEditor }: Props) {
     setLoading(true);
     setError('');
     try {
-      const [s, q] = await Promise.all([api.getAdminStats(), api.listQuests()]);
+      const [s, q] = await Promise.all([api.getAdminStats(), api.getAdminQuests()]);
       setStats(s);
       setQuests(q.quests || []);
     } catch (e: any) {

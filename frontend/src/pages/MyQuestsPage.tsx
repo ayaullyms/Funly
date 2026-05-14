@@ -296,10 +296,11 @@ function MyQuestCard({
           <StatusBadge status={q.status} />
           {isWinner && (
             <SmallBadge
-              label="Winner 🏆"
+              label="Winner"
               color={C.amber}
               bg="rgba(251,191,36,0.12)"
               border="rgba(251,191,36,0.3)"
+              icon="ti-star"
             />
           )}
         </div>
@@ -442,28 +443,18 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 function SmallBadge({
-  label,
-  color,
-  bg,
-  border,
+  label, color, bg, border, icon,
 }: {
-  label: string;
-  color: string;
-  bg: string;
-  border: string;
+  label: string; color: string; bg: string; border: string; icon?: string;
 }) {
   return (
-    <span
-      style={{
-        fontSize: 8,
-        padding: "2px 7px",
-        borderRadius: 4,
-        fontWeight: 700,
-        color,
-        background: bg,
-        border: `0.5px solid ${border}`,
-      }}
-    >
+    <span style={{
+      fontSize: 8, padding: "2px 7px", borderRadius: 4,
+      fontWeight: 700, color, background: bg,
+      border: `0.5px solid ${border}`,
+      display: "inline-flex", alignItems: "center", gap: 3,
+    }}>
+      {icon && <i className={`ti ${icon}`} style={{ fontSize: 10, color }} aria-hidden="true" />}
       {label}
     </span>
   );

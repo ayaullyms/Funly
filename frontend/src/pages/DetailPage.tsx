@@ -100,23 +100,53 @@ export function DetailPage({ onOpenTask }: Props) {
 
           {/* stats row */}
           {q.isJoined && (
-            <div style={{
-              display: 'flex', borderTop: `0.5px solid ${C.border}`,
-              margin: '0 -14px',
-            }}>
-              {[
-                { v: q.myRank ? '#' + q.myRank : '—', l: 'Rank' },
-                { v: q.myScore || 0,                  l: 'Points' },
-                { v: `${correctCount}/${q.totalTasks || 0}`, l: 'Tasks' },
-              ].map((s, i) => (
-                <div key={i} style={{
-                  flex: 1, textAlign: 'center', padding: '10px 0',
-                  borderRight: i < 2 ? `0.5px solid ${C.border}` : 'none',
+            <div>
+              {q.iWon && (
+                <div style={{
+                  margin: '10px 0',
+                  background: 'rgba(251,191,36,0.1)',
+                  border: '0.5px solid rgba(251,191,36,0.35)',
+                  borderRadius: 12,
+                  padding: '12px 14px',
+                  display: 'flex', alignItems: 'center', gap: 12,
                 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>{s.v}</div>
-                  <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>{s.l}</div>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: 'rgba(251,191,36,0.15)',
+                    border: '0.5px solid rgba(251,191,36,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <i className="ti ti-star" style={{ fontSize: 18, color: '#fbbf24' }} aria-hidden="true" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#fbbf24' }}>Congratulations! You won</div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                      You placed{' '}
+                      <span style={{ color: '#fbbf24', fontWeight: 700 }}>#{q.myRank}</span>
+                      {' '}among all participants
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )}
+
+              <div style={{
+                display: 'flex', borderTop: `0.5px solid ${C.border}`,
+                margin: '0 -14px',
+              }}>
+                {[
+                  { v: q.myRank ? '#' + q.myRank : '—', l: 'Rank' },
+                  { v: q.myScore || 0,                  l: 'Points' },
+                  { v: `${correctCount}/${q.totalTasks || 0}`, l: 'Tasks' },
+                ].map((s, i) => (
+                  <div key={i} style={{
+                    flex: 1, textAlign: 'center', padding: '10px 0',
+                    borderRight: i < 2 ? `0.5px solid ${C.border}` : 'none',
+                  }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>{s.v}</div>
+                    <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>{s.l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

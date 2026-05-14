@@ -97,6 +97,7 @@ export const api = {
 
   // ADMIN — quests
   getAdminStats: () => request<AdminStatsResponse>('GET', '/admin/stats'),
+  getAdminQuests: () => request<QuestsResponse>('GET', '/admin/quests'),
   createQuest:   (body: Partial<Quest>) => request<CreateQuestResponse>('POST', '/admin/quests', body),
   updateQuest:   (id: string, body: Partial<Quest>) => request<{ quest: Quest }>('PUT', `/admin/quests/${id}`, body),
   deleteQuest:   (id: string) => request<{ message: string }>('DELETE', `/admin/quests/${id}`),

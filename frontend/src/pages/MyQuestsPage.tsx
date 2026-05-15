@@ -250,7 +250,7 @@ function MyQuestCard({
     totalTasks > 0
       ? Math.min(100, Math.max(0, Math.round((completedTasks / totalTasks) * 100)))
       : 0;
-  const isWinner = (q as any).iWon;
+  const isWinner = (q as any).iWon ?? (q as any).isWinner;
   const isActive = q.status === "active";
 
   return (

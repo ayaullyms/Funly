@@ -36,7 +36,6 @@ model Quest {
   title             String
   shortDescription  String?            @map("short_description")
   fullDescription   String?            @map("full_description")
-  rewardDescription String?            @map("reward_description")
   rules             String?
   startDate         DateTime?          @map("start_date")
   endDate           DateTime?          @map("end_date")
@@ -167,7 +166,6 @@ enum ParticipantStatus {
 
 enum TaskType {
   quiz
-  text
   multiple_choice
 }
 

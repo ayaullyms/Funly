@@ -307,7 +307,7 @@ function TaskEditorItem({ task: t, index: i, onChange, onRemove, onSave }: TaskE
         <div>
           <div style={labelSt}>Type</div>
           <div style={{ display: 'flex', gap: 5 }}>
-            {[['multiple_choice', 'Multiple choice'], ['quiz', 'Word/phrase'], ['text', 'Text']] .map(([val, label]) => (
+            {[['multiple_choice', 'Multiple choice'], ['quiz', 'Word/phrase']] .map(([val, label]) => (
               <button key={val} onClick={() => onChange({ taskType: val as TaskType })} style={{
                 fontSize: 9, padding: '4px 9px', borderRadius: 5, cursor: 'pointer',
                 background: t.taskType === val ? 'rgba(123,110,246,0.15)' : 'transparent',

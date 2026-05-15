@@ -1,5 +1,5 @@
 export type QuestStatus = 'draft' | 'active' | 'completed';
-export type TaskType = 'multiple_choice' | 'quiz' | 'text';
+export type TaskType = 'multiple_choice' | 'quiz';
 export type RewardStatus = 'pending' | 'distributed';
 export type UserRole = 'user' | 'admin';
 
@@ -21,7 +21,6 @@ export interface Quest {
   title: string;
   shortDescription?: string;
   fullDescription?: string;
-  rewardDescription?: string;
   rules?: string;
   status: QuestStatus;
   startDate?: string;

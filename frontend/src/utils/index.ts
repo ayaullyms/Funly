@@ -35,3 +35,10 @@ export const STATUS_STYLES: Record<string, string> = {
   distributed: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
   winner:      'bg-amber-500/20 text-amber-400 border border-amber-500/30',
 };
+
+export function fmtReward(amount?: number | string | null, winners?: number | null): string {
+  if (!amount) return '';
+  const a = Number(amount);
+  const w = winners ?? 1;
+  return `${a} TON × ${w} winner${w !== 1 ? 's' : ''}`;
+}

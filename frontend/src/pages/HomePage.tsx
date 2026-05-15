@@ -151,10 +151,10 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
         </div>
       </div>
 
-      {q.rewardDescription && (
+      {q.rewardAmountPerWinner && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
           <TonIcon />
-          <span style={{ fontSize: 12, color: C.purple, fontWeight: 700 }}>{q.rewardDescription}</span>
+          <span style={{ fontSize: 12, color: C.purple, fontWeight: 700 }}>{q.rewardAmountPerWinner} TON</span>
         </div>
       )}
 

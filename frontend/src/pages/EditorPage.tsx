@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { EditorTask, TaskType } from '../types';
 import { useApp } from '../context/AppContext';
+import { fmtDate, fmtReward } from '../utils';
 
 const C = {
   bg: '#0D0D14', bg2: '#13131f', border: '#1e1e32',
@@ -22,13 +23,12 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
   const { showToast } = useApp();
   const [questId, setQuestId] = useState<string | null>(initialQuestId);
   const [loading, setLoading] = useState(!!initialQuestId);
-  const [step, setStep] = useState(0); // 0=info, 1=tasks, 2=review
+  const [step, setStep] = useState(0); 
 
   /* Quest form */
   const [title,     setTitle]     = useState('');
   const [shortDesc, setShortDesc] = useState('');
   const [fullDesc,  setFullDesc]  = useState('');
-  const [reward,    setReward]    = useState('');
   const [rules,     setRules]     = useState('');
   const [rewardAmount, setRewardAmount] = useState('');
   const [winnersCount, setWinnersCount] = useState('3');
@@ -43,7 +43,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
     api.getQuest(initialQuestId)
       .then(({ quest: q, tasks: t }) => {
         setTitle(q.title || ''); setShortDesc(q.shortDescription || '');
-        setFullDesc(q.fullDescription || ''); setReward(q.rewardDescription || '');
+        setFullDesc(q.fullDescription || ''); 
         setRules(q.rules || ''); setStatus(q.status || 'draft');
         if (q.rewardAmountPerWinner != null) {
           setRewardAmount(String(q.rewardAmountPerWinner));
@@ -72,7 +72,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
         title,
         shortDescription: shortDesc,
         fullDescription: fullDesc,
-        rewardDescription: reward,
         rules,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
@@ -168,9 +167,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
           <Field label="Full description">
             <textarea placeholder="Full description..." value={fullDesc} onChange={e => setFullDesc(e.target.value)} rows={3} style={{ ...inputSt, resize: 'vertical' }} />
           </Field>
-          <Field label="Reward">
-            <input placeholder="e.g. 5 TON" value={reward} onChange={e => setReward(e.target.value)} style={inputSt} />
-          </Field>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <Field label="Reward per winner (TON)">
               <input
@@ -242,7 +238,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
           <div style={{ background: 'rgba(74,222,128,0.05)', border: '0.5px solid rgba(74,222,128,0.18)', borderRadius: 10, padding: '11px 14px' }}>
             {[
               { l: 'Title',      v: title || '—' },
-              { l: 'Reward',     v: reward || '—' },
+              { l: 'Reward', v: fmtReward(rewardAmount, Number(winnersCount)) || '—' },
               { l: 'Reward/winner', v: rewardAmount ? `${rewardAmount} TON` : '—' },
               { l: 'Winners',       v: winnersCount || '3' },
               { l: 'Questions',  v: `${tasks.length} added` },

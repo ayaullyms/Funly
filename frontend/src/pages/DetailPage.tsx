@@ -121,9 +121,9 @@ export function DetailPage({ onOpenTask }: Props) {
             <StatusBadge status={q.status} />
           </div>
 
-          {q.rewardDescription && (
+          {q.rewardAmountPerWinner && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#a8a0ff', fontWeight: 600, marginBottom: 10 }}>
-              <TonIcon /> {q.rewardDescription} · {q.participantsCount || 0} participants
+              <TonIcon /> {q.rewardAmountPerWinner} TON · {q.participantsCount || 0} participants
             </div>
           )}
 
@@ -296,12 +296,12 @@ function InfoTab({ quest: q }: { quest: Quest }) {
           {q.endDate   && <InfoCell label="END"   value={fmtDate(q.endDate)} />}
         </div>
       )}
-      {q.rewardDescription && (
+      {q.rewardAmountPerWinner && (
         <div style={{ background: 'rgba(123,110,246,0.06)', border: '0.5px solid rgba(123,110,246,0.25)', borderRadius: 10, padding: '10px 13px' }}>
           <div style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6, fontFamily: 'IBM Plex Mono, monospace' }}>Reward</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <TonIcon />
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#7B6EF6' }}>{q.rewardDescription}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#7B6EF6' }}>{q.rewardAmountPerWinner} TON</span>
           </div>
         </div>
       )}

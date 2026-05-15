@@ -326,9 +326,6 @@ function MyQuestCard({
         {[
           { v: rank ? "#" + rank : "—", l: "Rank" },
           { v: score, l: "Pts" },
-          ...(isWinner
-            ? [{ v: `+${(q as any).rewardAmount || "?"} T`, l: "Earned" }]
-            : []),
         ].map((s, i, arr) => (
           <div
             key={i}

@@ -447,11 +447,16 @@ async function distributeQuestRewards(req, res) {
       });
     });
 
-    for (const reward of rewards) { 
+    for (const reward of rewards) {
       if (!reward.user.telegramId) continue;
+
+      const isTestnet = process.env.TON_TESTNET === 'true';
+      const tonscanBase = isTestnet ? 'https://testnet.tonscan.org' : 'https://tonscan.org';
+      const txLink = `${tonscanBase}/tx/${transactionHash}`;
+
       await sendTgMessage(
         reward.user.telegramId,
-        `💸 <b>Reward sent!</b>\n\n<b>${Number(reward.amount).toFixed(2)} TON</b> has been transferred to your wallet.\nCongrats 🎉`
+        `💸 <b>Reward sent!</b>\n\n<b>${Number(reward.amount).toFixed(2)} TON</b> has been transferred to your wallet.\n\n<a href="${txLink}">View transaction ↗</a>\n\nCongrats 🎉`
       );
     }
 

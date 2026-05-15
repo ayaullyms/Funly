@@ -418,7 +418,7 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
       </div>
 
       <div style={{ display: 'flex', gap: 6, padding: '8px 14px', borderTop: `0.5px solid ${C.border}`, flexWrap: 'wrap' }}>
-        <button onClick={onEdit} style={ghostBtnSt}>✎ Edit</button>
+        {q.status !== 'completed' && ( <button onClick={onEdit} style={ghostBtnSt}>✎ Edit</button>)}
 
         {q.status === 'active' && (
           <button

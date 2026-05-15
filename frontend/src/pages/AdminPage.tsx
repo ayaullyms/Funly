@@ -145,19 +145,24 @@ export function AdminPage({ onOpenEditor }: Props) {
         </div>
       )}
 
-      {/* Блокчейн-панель */}
       {distributingQuestId && (
         <DistributeModal
           questId={distributingQuestId}
           onClose={() => setDistributingQuestId(null)}
-          onSuccess={() => { setDistributingQuestId(null); load(); }}
+          onSuccess={() => {
+            setQuests(prev => prev.map(q =>
+              q.id === distributingQuestId
+                ? { ...q, pendingRewards: 0, distributedRewards: (q.distributedRewards ?? 0) + (q.pendingRewards ?? 1) }
+                : q
+            ));
+            setDistributingQuestId(null);
+            load(); 
+          }}
         />
       )}
     </div>
   );
 }
-
-// ── Модальная панель ──────────────────────────────────────────────────────────
 
 function DistributeModal({
   questId, onClose, onSuccess,
@@ -544,8 +549,6 @@ function Spinner({ size = 28, color = C.green }: { size?: number; color?: string
     }} />
   );
 }
-
-// ── Стили ─────────────────────────────────────────────────────────────────────
 
 const monoLabel: React.CSSProperties = {
   fontSize: 9, color: C.muted, textTransform: 'uppercase',

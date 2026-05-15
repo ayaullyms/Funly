@@ -56,7 +56,6 @@ export function MyQuestsPage() {
     navigate("detail");
   };
 
-  // Summary stats
   const active = quests.filter((q) => q.status === "active").length;
   const completed = quests.filter((q) => q.status === "completed").length;
   const won = quests.filter((q) => (q as any).iWon).length;
@@ -295,13 +294,23 @@ function MyQuestCard({
         >
           <StatusBadge status={q.status} />
           {isWinner && (
-            <SmallBadge
-              label="Winner"
-              color={C.amber}
-              bg="rgba(251,191,36,0.12)"
-              border="rgba(251,191,36,0.3)"
-              icon="ti-star"
-            />
+            <span style={{
+              fontSize: 8, padding: "2px 7px", borderRadius: 4,
+              fontWeight: 700, color: C.amber,
+              background: "rgba(251,191,36,0.12)",
+              border: `0.5px solid rgba(251,191,36,0.3)`,
+              display: "inline-flex", alignItems: "center", gap: 3,
+            }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+              </svg>
+              Winner
+            </span>
           )}
         </div>
       </div>
@@ -400,9 +409,6 @@ function getCompletedTasks(q: Quest, score: number, totalTasks: number) {
     return Math.min(completed, totalTasks);
   }
 
-  // Fallback for getMyQuests() responses that contain score/rank,
-  // but do not return myCompletedTasks. Most current tasks are 10 pts,
-  // so this prevents the card from staying at 0% after a solved task.
   if (score > 0 && totalTasks > 0) {
     return Math.min(Math.max(1, Math.floor(score / 10)), totalTasks);
   }
@@ -439,23 +445,6 @@ function StatusBadge({ status }: { status: string }) {
       }}
     >
       {status}
-    </span>
-  );
-}
-function SmallBadge({
-  label, color, bg, border, icon,
-}: {
-  label: string; color: string; bg: string; border: string; icon?: string;
-}) {
-  return (
-    <span style={{
-      fontSize: 8, padding: "2px 7px", borderRadius: 4,
-      fontWeight: 700, color, background: bg,
-      border: `0.5px solid ${border}`,
-      display: "inline-flex", alignItems: "center", gap: 3,
-    }}>
-      {icon && <i className={`ti ${icon}`} style={{ fontSize: 10, color }} aria-hidden="true" />}
-      {label}
     </span>
   );
 }

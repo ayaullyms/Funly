@@ -6,7 +6,6 @@ import { Badge, SpinnerPage, EmptyState } from '../components/ui';
 import { useApp } from '../context/AppContext';
 import { useQuestDetail } from '../context/QuestDetailContext';
 
-/* ── colour tokens ── */
 const C = {
   bg2:    '#13131f',
   bg3:    '#1a1a2a',

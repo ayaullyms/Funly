@@ -43,7 +43,6 @@ export function ProfilePage() {
     catch (e: any) { showToast(e.message, 'error'); }
   };
 
-  // When TonConnect wallet connects, persist address to backend.
   useEffect(() => {
     if (!wallet?.account?.address) return;
     if (!user) return;
@@ -89,14 +88,16 @@ export function ProfilePage() {
       {/* Earnings banner */}
       {totalEarned > 0 && (
         <div style={{
-          background: 'rgba(74,222,128,0.06)', border: '0.5px solid rgba(74,222,128,0.2)',
+          background: C.bg2, border: `0.5px solid ${C.border}`,
           borderRadius: 10, padding: '10px 14px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ fontSize: 10, color: C.sec }}>Total earned</span>
+          <span style={{ fontSize: 11, color: '#fff', fontWeight: 600 }}>Total earned</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: C.green, fontFamily: 'IBM Plex Mono, monospace' }}>{totalEarned.toFixed(2)}</span>
-            <span style={{ fontSize: 11, color: C.green, fontWeight: 600 }}>TON</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: 'IBM Plex Mono, monospace' }}>
+              {totalEarned.toFixed(2)}
+            </span>
+            <span style={{ fontSize: 11, color: C.purpleL, fontWeight: 600, fontFamily: 'IBM Plex Mono, monospace' }}>TON</span>
           </div>
         </div>
       )}

@@ -114,15 +114,10 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
         res.isCorrect ? "success" : "error",
       );
 
-      // ВАЖНО: после submit заново берём quest + leaderboard.
-      // Раньше leaderboard обновлялся через старый detailState и затирал myAnswer,
-      // поэтому задание было пройдено на бэке, но во фронте снова выглядело непройденным.
       await refreshQuestState();
     } catch (e: any) {
       const msg = String(e?.message || "");
 
-      // Если бэк отвечает, что задание уже было отправлено, значит состояние фронта устарело.
-      // Просто синхронизируем данные, чтобы задание сразу показалось пройденным.
       if (/already|submitted|completed|пройден|отправлен/i.test(msg)) {
         try {
           setOptimisticSubmittedIds((prev) => {
@@ -149,18 +144,15 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
       <div
         style={{
           background: `linear-gradient(155deg, #1a1560 0%, ${C.bg} 80%)`,
-          borderRadius: 16,
-          padding: "12px 14px 14px",
+          borderRadius: 16, padding: "12px 14px 14px",
           border: `0.5px solid ${C.border}`,
         }}
       >
         {/* top row */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 10,
+            display: "flex", justifyContent: "space-between",
+            alignItems: "center", marginBottom: 10,
           }}
         >
           <button onClick={onBack} style={backBtnSt}>
@@ -183,18 +175,14 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
         {/* progress bar */}
         <div
           style={{
-            height: 2,
-            background: "#2a2a3a",
-            borderRadius: 2,
-            marginBottom: 10,
+            height: 2, background: "#2a2a3a", 
+            borderRadius: 2, marginBottom: 10,
           }}
         >
           <div
             style={{
-              height: "100%",
-              borderRadius: 2,
-              background: C.purple,
-              width: `${progress}%`,
+              height: "100%", borderRadius: 2,
+              background: C.purple, width: `${progress}%`,
               transition: "width 0.3s",
             }}
           />
@@ -205,23 +193,17 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
             display: "inline-flex",
             background: "rgba(123,110,246,0.15)",
             border: "0.5px solid rgba(123,110,246,0.35)",
-            borderRadius: 5,
-            padding: "2px 8px",
-            fontSize: 10,
-            color: C.purpleL,
-            fontWeight: 700,
-            marginBottom: 8,
+            borderRadius: 5, padding: "2px 8px",
+            fontSize: 10, color: C.purpleL,
+            fontWeight: 700, marginBottom: 8,
           }}
         >
           +{task.points} pts
         </div>
         <h2
           style={{
-            fontWeight: 700,
-            fontSize: 15,
-            color: "#fff",
-            lineHeight: 1.5,
-            marginBottom: 3,
+            fontWeight: 700, fontSize: 15,
+            color: "#fff", lineHeight: 1.5, marginBottom: 3,
           }}
         >
           {task.title}
@@ -250,46 +232,34 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
       ) : isMulti ? (
         <div className="flex flex-col gap-2">
           {opts.map((o, i) => {
-            // ✅ БАГ 1 FIX: сравниваем по индексу
             const isSel = selectedIndex === i;
             return (
               <button
                 key={i}
                 onClick={() => setSelectedIndex(i)}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 13px",
+                  display: "flex", alignItems: "center",
+                  gap: 10, padding: "10px 13px",
                   background: isSel ? "rgba(123,110,246,0.06)" : C.bg2,
                   border: `0.5px solid ${isSel ? C.purple : C.border}`,
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  width: "100%",
+                  borderRadius: 10, cursor: "pointer",
+                  textAlign: "left", width: "100%",
                 }}
               >
                 <span
                   style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
+                    width: 18, height: 18, borderRadius: "50%",
                     border: `1px solid ${isSel ? C.purple : "#2a2a3a"}`,
                     background: isSel ? C.purple : "transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    display: "flex", alignItems: "center",
+                    justifyContent: "center", flexShrink: 0,
                   }}
                 >
                   {isSel && (
                     <span
                       style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "#fff",
-                        display: "block",
+                        width: 6, height: 6, borderRadius: "50%",
+                        background: "#fff", display: "block",
                       }}
                     />
                   )}
@@ -319,15 +289,10 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
             onChange={(e) => setTextAns(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
             style={{
-              background: C.bg2,
-              border: `0.5px solid rgba(123,110,246,0.5)`,
-              borderRadius: 9,
-              padding: "11px 13px",
-              fontSize: 13,
-              color: "#ddd",
-              fontFamily: "IBM Plex Sans, sans-serif",
-              outline: "none",
-              width: "100%",
+              background: C.bg2, border: `0.5px solid rgba(123,110,246,0.5)`,
+              borderRadius: 9, padding: "11px 13px",
+              fontSize: 13, color: "#ddd",
+              fontFamily: "IBM Plex Sans, sans-serif", outline: "none", width: "100%",
             }}
           />
           <button
@@ -389,7 +354,6 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
     <div className="flex flex-col gap-3">
       {opts.length > 0 ? (
         opts.map((o, i) => {
-          // ✅ БАГ 1 FIX: сравниваем по индексу, а не по значению
           const isSel =
             i < opts.length &&
             opts[i] === task.myAnswer &&
@@ -415,28 +379,19 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
             <div
               key={i}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 13px",
-                background: bg,
-                border: `0.5px solid ${border}`,
-                borderRadius: 10,
+                display: "flex", alignItems: "center",
+                gap: 10, padding: "10px 13px", background: bg,
+                border: `0.5px solid ${border}`, borderRadius: 10,
               }}
             >
               <span
                 style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: "50%",
+                  width: 18, height: 18, borderRadius: "50%",
                   border: `1px solid ${circleColor}`,
                   background: isSel ? `${circleColor}40` : "transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: 10,
-                  color: circleColor,
+                  display: "flex", alignItems: "center",
+                  justifyContent: "center", flexShrink: 0,
+                  fontSize: 10, color: circleColor,
                 }}
               >
                 {isSel && (isCorrect ? "✓" : isWrong ? "✗" : null)}
@@ -461,20 +416,15 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
       ) : (
         <div
           style={{
-            background: "#13131f",
-            border: "0.5px solid #2a2a3a",
-            borderRadius: 10,
-            padding: "12px 14px",
+            background: "#13131f", border: "0.5px solid #2a2a3a",
+            borderRadius: 10, padding: "12px 14px",
           }}
         >
           <div
             style={{
-              fontSize: 9,
-              color: "#555",
-              textTransform: "uppercase",
-              letterSpacing: 0.8,
-              marginBottom: 4,
-              fontFamily: "IBM Plex Mono, monospace",
+              fontSize: 9, color: "#555",
+              textTransform: "uppercase", letterSpacing: 0.8,
+              marginBottom: 4, fontFamily: "IBM Plex Mono, monospace",
             }}
           >
             Your answer
@@ -487,11 +437,8 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
       {/* Result banner */}
       <div
         style={{
-          borderRadius: 10,
-          padding: "10px 14px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          borderRadius: 10, padding: "10px 14px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
           background: isCorrect
             ? "rgba(74,222,128,0.08)"
             : "rgba(248,113,113,0.08)",
@@ -500,9 +447,7 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
       >
         <span
           style={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: isCorrect ? "#4ade80" : "#f87171",
+            fontSize: 13, fontWeight: 700, color: isCorrect ? "#4ade80" : "#f87171",
           }}
         >
           {isCorrect ? "Correct!" : "Wrong answer"}
@@ -510,10 +455,8 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
         {isCorrect && (
           <span
             style={{
-              fontSize: 18,
-              fontWeight: 800,
-              color: "#4ade80",
-              fontFamily: "IBM Plex Mono, monospace",
+              fontSize: 18, fontWeight: 800,
+              color: "#4ade80", fontFamily: "IBM Plex Mono, monospace",
             }}
           >
             +{task.myPoints}
@@ -525,38 +468,23 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
 }
 
 const backBtnSt: React.CSSProperties = {
-  fontSize: 11,
-  color: "#7B6EF6",
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  padding: 0,
+  fontSize: 11, color: "#7B6EF6",
+  background: "none", border: "none",
+  cursor: "pointer", padding: 0,
   fontFamily: "IBM Plex Sans, sans-serif",
 };
 
 const primaryBtnSt = (active: boolean): React.CSSProperties => ({
-  width: "100%",
-  background: active ? "#7B6EF6" : "#2a2a3a",
-  color: "#fff",
-  fontSize: 13,
-  fontWeight: 700,
-  padding: "10px 14px",
-  borderRadius: 9,
-  border: "none",
-  cursor: active ? "pointer" : "not-allowed",
-  fontFamily: "IBM Plex Sans, sans-serif",
-  opacity: active ? 1 : 0.5,
+  width: "100%", background: active ? "#7B6EF6" : "#2a2a3a",
+  color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 14px",
+  borderRadius: 9, border: "none", cursor: active ? "pointer" : "not-allowed",
+  fontFamily: "IBM Plex Sans, sans-serif", opacity: active ? 1 : 0.5,
 });
 
 const ghostBtnSt: React.CSSProperties = {
-  flex: 1,
-  background: "rgba(123,110,246,0.1)",
-  color: "#9d90f8",
-  fontSize: 12,
-  fontWeight: 600,
-  padding: "9px 14px",
-  borderRadius: 9,
+  flex: 1, background: "rgba(123,110,246,0.1)",
+  color: "#9d90f8", fontSize: 12, fontWeight: 600,
+  padding: "9px 14px", borderRadius: 9,
   border: "0.5px solid rgba(123,110,246,0.35)",
-  cursor: "pointer",
-  fontFamily: "IBM Plex Sans, sans-serif",
+  cursor: "pointer", fontFamily: "IBM Plex Sans, sans-serif",
 };

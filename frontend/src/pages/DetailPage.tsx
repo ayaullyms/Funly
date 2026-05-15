@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
-import type { Quest, Task, LeaderboardData } from '../types';
+import type { Quest, Task, LeaderboardData , User} from '../types';
 import { fmtDate } from '../utils';
 import { SpinnerPage } from '../components/ui';
 import { useApp } from '../context/AppContext';
@@ -38,15 +38,30 @@ export function DetailPage({ onOpenTask }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
   const [tab, setTab]         = useState('Info');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showWalletWarning, setShowWalletWarning] = useState(false);
 
   useEffect(() => {
     if (!questId) return;
-    if (detailState) { setLoading(false); return; }
-    setLoading(true);
-    Promise.all([api.getQuest(questId), api.getLeaderboard(questId)])
-      .then(([qd, lb]) => setDetailState({ questData: qd, lbData: lb }))
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        const [me, qd, lb] = await Promise.all([
+          api.getMe(),
+          detailState ? Promise.resolve(null) : api.getQuest(questId),
+          detailState ? Promise.resolve(null) : api.getLeaderboard(questId),
+        ]);
+        setCurrentUser(me.user);
+        if (qd && lb) {
+          setDetailState({ questData: qd, lbData: lb });
+        }
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
   }, [questId]);
 
   useEffect(() => {
@@ -60,6 +75,10 @@ export function DetailPage({ onOpenTask }: Props) {
 
   const joinQuest = async () => {
     if (!questId) return;
+    if (!currentUser?.walletAddress) {
+      setShowWalletWarning(true);
+      return;
+    }
     try {
       await api.joinQuest(questId);
       showToast('Joined!');
@@ -77,6 +96,16 @@ export function DetailPage({ onOpenTask }: Props) {
 
   return (
     <div className="flex flex-col gap-4 pb-2">
+
+      {showWalletWarning && (
+        <WalletWarningModal
+          onGoToProfile={() => {
+            setShowWalletWarning(false);
+            navigate('profile');
+          }}
+          onClose={() => setShowWalletWarning(false)}
+        />
+      )}
       {/* Hero */}
       <div style={{
         background: `linear-gradient(155deg, #1a1560 0%, ${C.bg} 75%)`,
@@ -116,7 +145,14 @@ export function DetailPage({ onOpenTask }: Props) {
                     border: '0.5px solid rgba(251,191,36,0.3)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <i className="ti ti-star" style={{ fontSize: 18, color: '#fbbf24' }} aria-hidden="true" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                  </svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 800, color: '#fbbf24' }}>Congratulations! You won</div>
@@ -173,6 +209,76 @@ export function DetailPage({ onOpenTask }: Props) {
       {tab === 'Tasks' && <TasksTab tasks={tasks} quest={q} onOpenTask={onOpenTask} />}
       {tab === 'Board' && <BoardTab lbData={lbData} />}
       {tab === 'Rules' && <RulesTab quest={q} />}
+    </div>
+  );
+}
+
+interface WalletWarningModalProps {
+  onGoToProfile: () => void;
+  onClose: () => void;
+}
+
+function WalletWarningModal({
+  onGoToProfile,
+  onClose,
+}: WalletWarningModalProps) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 999,
+        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex',
+        alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#13131f', border: '0.5px solid #2a2a3a', borderRadius: 20,
+          padding: '20px 18px', width: '100%', maxWidth: 420, margin: '0 12px',
+        }}
+      >
+        <div
+          style={{
+            width: 48, height: 48, borderRadius: 14,
+            margin: '0 auto 14px', background: 'rgba(251,191,36,0.1)',
+            border: '0.5px solid rgba(251,191,36,0.3)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', fontSize: 22,
+          }}
+        >
+          ⚠️
+        </div>
+
+        <h3
+          style={{
+            fontSize: 15, fontWeight: 800,
+            color: '#fff', textAlign: 'center', marginBottom: 8,
+          }}
+        >
+          Wallet not connected
+        </h3>
+
+        <p
+          style={{
+            fontSize: 12, color: '#888', lineHeight: 1.65,
+            textAlign: 'center', marginBottom: 18,
+          }}
+        >
+          Connect your TON wallet in profile to receive rewards.
+        </p>
+
+        <button
+          onClick={onGoToProfile}
+          style={{
+            width: '100%', padding: '11px 14px',
+            borderRadius: 10, background: '#0098EA',
+            border: 'none', cursor: 'pointer',
+            fontSize: 13, fontWeight: 700, color: '#fff',
+          }}
+        >
+          Connect wallet in Profile
+        </button>
+      </div>
     </div>
   );
 }

@@ -4,8 +4,10 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cron = require('node-cron');
 
 const routes = require('./routes');
+const { sendQuestEndReminders } = require('./jobs/questReminder');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,6 +32,10 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
+
+cron.schedule('0 * * * *', () => {
+  sendQuestEndReminders().catch(console.error);
+});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

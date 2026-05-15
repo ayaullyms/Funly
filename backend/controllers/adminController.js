@@ -1,6 +1,7 @@
 // controller/adminController.js
 
 const prisma = require('../config/prisma');
+const { sendTgMessage } = require('../utils/telegram');
 
 async function getAdminQuests(req, res) {
   try {
@@ -237,6 +238,26 @@ async function completeQuest(req, res) {
       ]),
     ]);
 
+    const allParticipants = await prisma.questParticipant.findMany({
+      where: { questId: id },
+      include: { user: { select: { telegramId: true, firstName: true } } },
+    });
+    const winnerIds = new Set(topParticipants.map(p => p.userId));
+
+    for (const p of allParticipants) {
+      const tgId = p.user.telegramId;
+      if (!tgId) continue;
+      if (winnerIds.has(p.userId)) {
+        await sendTgMessage(tgId,
+          `🏆 <b>You won!</b>\n\nQuest: <b>${quest.title}</b>\nReward: <b>${rewardAmount} TON</b>\n\nYour reward will be sent soon.`
+        );
+      } else {
+        await sendTgMessage(tgId,
+          `✨ <b>Quest finished</b> — "${quest.title}"\n\nYou placed <b>#${p.rank}</b> this time.\nNo reward this round, but new quests are coming soon. Keep going 💪`
+        );
+      }
+    }
+
     res.json({
       success: true,
       winners: topParticipants.length,
@@ -395,6 +416,7 @@ async function distributeQuestRewards(req, res) {
 
     const rewards = await prisma.reward.findMany({
       where: { questId: id, status: { in: ['pending', 'processing'] } },
+      include: { user: { select: { telegramId: true },},},
     });
 
     if (rewards.length === 0) {
@@ -424,6 +446,14 @@ async function distributeQuestRewards(req, res) {
         data: { rewardClaimed: true },
       });
     });
+
+    for (const reward of rewards) { 
+      if (!reward.user.telegramId) continue;
+      await sendTgMessage(
+        reward.user.telegramId,
+        `💸 <b>Reward sent!</b>\n\n<b>${Number(reward.amount).toFixed(2)} TON</b> has been transferred to your wallet.\nCongrats 🎉`
+      );
+    }
 
     res.json({ ok: true, distributed: rewards.length, transactionHash, contractAddress });
   } catch (err) {

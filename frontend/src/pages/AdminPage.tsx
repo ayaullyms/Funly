@@ -391,18 +391,34 @@ interface RowProps {
 function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDistribute }: RowProps) {
   const [participants, setParticipants] = useState<Participant[] | null>(null);
   const [loadingP, setLoadingP] = useState(false);
-  const [showP, setShowP]       = useState(false);
+  const [showP, setShowP] = useState(false);
 
-  const toggleP = async () => {
-    if (showP) { setShowP(false); return; }
-    setShowP(true);
-    if (participants !== null) return;
-    setLoadingP(true);
-    try {
-      const d = await api.getParticipants(q.id);
-      setParticipants(d.participants || []);
-    } catch { setParticipants([]); }
-    finally { setLoadingP(false); }
+  const [winners, setWinners] = useState<Participant[] | null>(null);
+  const [loadingW, setLoadingW] = useState(false);
+  const [showW, setShowW] = useState(false);
+  const isCompleted = q.status === 'completed';
+
+  const toggleW = async () => {
+    if (showW) { setShowW(false); return; }
+    setShowW(true);
+    if (isCompleted) {
+      if (winners !== null) return;
+      setLoadingW(true);
+      try {
+        const d = await api.getParticipants(q.id);
+        const w = (d.participants || []).filter((p: any) => p.isWinner);
+        setWinners(w);
+      } catch { setWinners([]); }
+      finally { setLoadingW(false); }
+    } else {
+      if (participants !== null) return;
+      setLoadingP(true);
+      try {
+        const d = await api.getParticipants(q.id);
+        setParticipants(d.participants || []);
+      } catch { setParticipants([]); }
+      finally { setLoadingP(false); }
+    }
   };
 
   return (
@@ -413,6 +429,16 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
           <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>
             {q.participantsCount || 0} participants · {q.status}
           </div>
+          {q.status === 'active' && (
+            <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 10, color: C.muted, }}>
+              <span>👥 {q.participantsCount || 0} started</span>
+              {q.completedCount != null && (
+                <span style={{ color: C.green }}>
+                  ✓ {q.completedCount} finished
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <StatusBadge status={q.status} />
       </div>
@@ -461,30 +487,67 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
           <button onClick={onActivate} style={primaryBtnSmSt}>▶ Activate</button>
         )}
 
-        <button onClick={toggleP} style={ghostBtnSt}>{showP ? 'Hide' : 'Participants'}</button>
+        <button onClick={toggleW} style={ghostBtnSt}>
+          {isCompleted
+            ? (showW ? 'Hide' : 'Winners')
+            : (showP ? 'Hide' : 'Participants')}
+        </button>
         <button onClick={onRemove} style={dangerBtnSt}>✕</button>
       </div>
 
-      {showP && (
+      {(showP || showW) && (
         <div style={{ borderTop: `0.5px solid ${C.border}`, padding: '10px 14px' }}>
-          {loadingP ? (
+          {(loadingP || loadingW) ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 12 }}>
               <Spinner size={16} color={C.green} />
             </div>
-          ) : !participants?.length ? (
-            <p style={{ fontSize: 12, color: C.muted }}>No participants</p>
+          ) : isCompleted ? (
+            !winners?.length ? (
+              <p style={{ fontSize: 12, color: C.muted }}>No winners</p>
+            ) : (
+              <div>
+                {winners.map((p, i) => (
+                  <div key={p.userId} style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', padding: '5px 0',
+                    borderBottom: i < winners.length - 1 ? `0.5px solid ${C.border}` : 'none',
+                    fontSize: 12,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ color: C.amber, fontSize: 10 }}>#{i + 1}</span>
+                      <span style={{ color: '#ccc' }}>
+                        {p.firstName || p.username || 'Anonymous'}
+                        {p.username && <span style={{ color: C.muted, marginLeft: 5 }}>@{p.username}</span>}
+                      </span>
+                    </div>
+                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: C.green, fontWeight: 700 }}>
+                      {p.score} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
-            <div>
-              {participants.map(p => (
-                <div key={p.userId} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `0.5px solid ${C.border}`, fontSize: 12 }}>
-                  <span style={{ color: '#ccc' }}>
-                    {p.firstName || p.username || 'Anonymous'}
-                    {p.username && <span style={{ color: C.muted, marginLeft: 5 }}>@{p.username}</span>}
-                  </span>
-                  <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: C.green, fontWeight: 700 }}>{p.score} pts</span>
-                </div>
-              ))}
-            </div>
+            !participants?.length ? (
+              <p style={{ fontSize: 12, color: C.muted }}>No participants</p>
+            ) : (
+              <div>
+                {participants.map(p => (
+                  <div key={p.userId} style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    padding: '5px 0', borderBottom: `0.5px solid ${C.border}`, fontSize: 12,
+                  }}>
+                    <span style={{ color: '#ccc' }}>
+                      {p.firstName || p.username || 'Anonymous'}
+                      {p.username && <span style={{ color: C.muted, marginLeft: 5 }}>@{p.username}</span>}
+                    </span>
+                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: C.green, fontWeight: 700 }}>
+                      {p.score} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       )}

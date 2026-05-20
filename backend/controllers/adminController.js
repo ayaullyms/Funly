@@ -8,7 +8,7 @@ async function getAdminQuests(req, res) {
     const quests = await prisma.quest.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        _count: { select: { tasks: true } },
+        _count: { select: { tasks: true, participants: { where: { status: 'completed' } } } },
         rewards: { select: { status: true } },  
       },
     });
@@ -20,6 +20,7 @@ async function getAdminQuests(req, res) {
         return {
           ...q,
           totalTasks: q._count.tasks,
+          completedCount: q._count.participants,
           pendingRewards,       
           distributedRewards,    
           _count: undefined,

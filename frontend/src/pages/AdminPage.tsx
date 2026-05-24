@@ -431,7 +431,7 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
           </div>
           {q.status === 'active' && (
             <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 10, color: C.muted, }}>
-              <span>👥 {q.participantsCount || 0} started</span>
+              <span>{q.participantsCount || 0} started</span>
               {q.completedCount != null && (
                 <span style={{ color: C.green }}>
                   ✓ {q.completedCount} finished

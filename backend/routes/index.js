@@ -37,6 +37,7 @@ router.get('/admin/stats', adminCtrl.getStats);
 
 // Quest management
 router.get   ('/admin/quests', adminCtrl.getAdminQuests);
+router.get('/admin/quests/:id', adminCtrl.getAdminQuest);
 router.post  ('/admin/quests', adminCtrl.createQuest);
 router.put   ('/admin/quests/:id', adminCtrl.updateQuest);
 router.delete('/admin/quests/:id', adminCtrl.deleteQuest);

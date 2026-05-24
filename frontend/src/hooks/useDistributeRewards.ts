@@ -160,7 +160,7 @@ export function useDistributeRewards(questId: string) {
             address: r.walletAddress!,
             amount:  r.amount,
         }));
-3
+
         set({ step: 'signing', error: '' });
         nonceRef.current = BigInt(Date.now());
 

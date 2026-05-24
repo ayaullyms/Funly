@@ -21,6 +21,19 @@ contract QuestDistributor {
         require(sender() == self.owner, "Only owner");
         require(!self.distributed, "Already distributed");
 
+        let totalNeeded: Int = 0;
+        let checkNode: Cell? = self.winners;
+        while (checkNode != null) {
+            let s: Slice = checkNode!!.beginParse();
+            s.loadAddress();
+            let amount: Int = s.loadCoins();
+            totalNeeded += amount;
+            let hasNext: Bool = s.loadBool();
+            if (hasNext) { checkNode = s.loadRef(); } else { checkNode = null; }
+        }
+
+        require(myBalance() >= totalNeeded + ton("0.1"), "Insufficient balance");
+
         self.distributed = true;
 
         let node: Cell? = self.winners;
@@ -50,4 +63,5 @@ contract QuestDistributor {
     get fun isDistributed(): Bool { return self.distributed; }
     get fun balance(): Int { return myBalance(); }
     get fun owner(): Address { return self.owner; }
+    get fun nonce(): Int { return self.nonce; }
 }

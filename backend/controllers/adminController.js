@@ -33,6 +33,21 @@ async function getAdminQuests(req, res) {
   }
 }
 
+async function getAdminQuest(req, res) {
+  try {
+    const quest = await prisma.quest.findUnique({
+      where: { id: req.params.id },
+      include: {
+        tasks: { orderBy: { orderIndex: 'asc' } }, 
+      },
+    });
+    if (!quest) return res.status(404).json({ error: 'Quest not found' });
+    res.json({ quest, tasks: quest.tasks });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function createQuest(req, res) {
   try {
     const {
@@ -254,7 +269,7 @@ async function completeQuest(req, res) {
         );
       } else {
         await sendTgMessage(tgId,
-          `✨ <b>Quest finished</b> — "${quest.title}"\n\nYou placed <b>#${p.rank}</b> this time.\nNo reward this round, but new quests are coming soon. Keep going 💪`
+          `<b>Quest finished</b> — "${quest.title}"\n\nNo reward this round, but new quests are coming soon. Keep going`
         );
       }
     }
@@ -457,7 +472,7 @@ async function distributeQuestRewards(req, res) {
 
       await sendTgMessage(
         reward.user.telegramId,
-        `💸 <b>Reward sent!</b>\n\n<b>${Number(reward.amount).toFixed(2)} TON</b> has been transferred to your wallet.\n\n<a href="${txLink}">View transaction ↗</a>\n\nCongrats 🎉`
+        `<b>Reward sent!</b>\n\n<b>${Number(reward.amount).toFixed(2)} TON</b> has been transferred to your wallet.\n\n<a href="${txLink}">View transaction ↗</a>\n\nCongrats 🎉`
       );
     }
 
@@ -567,6 +582,7 @@ async function getStats(req, res) {
 
 module.exports = {
   getAdminQuests,
+  getAdminQuest,
   createQuest, updateQuest, deleteQuest,
   createTask, updateTask, deleteTask,
   getParticipants, completeQuest,

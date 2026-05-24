@@ -6,11 +6,15 @@ const prisma = require('../config/prisma');
 async function listQuests(req, res) {
   try {
     const { status, page = 1, limit = 20 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
+    const safeLimit = Math.min(parseInt(limit) || 20, 50);
+    const skip = (parseInt(page) - 1) * safeLimit;
+    const ALLOWED_STATUSES = ['active', 'completed'];
+    const statusFilter =
+      status && ALLOWED_STATUSES.includes(status)
+        ? status
+        : { not: 'draft' };
     const where = {
-      status: { not: 'draft' },
-      ...(status ? { status } : {}),
+      status: statusFilter,
     };
 
     const [quests, total] = await prisma.$transaction([
@@ -18,7 +22,7 @@ async function listQuests(req, res) {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit),
+        take: safeLimit,
         include: {
           participants: {
             where: { userId: req.user.id },
@@ -40,7 +44,7 @@ async function listQuests(req, res) {
       })),
       total,
       page: parseInt(page),
-      limit: parseInt(limit),
+      limit: safeLimit,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -103,7 +107,9 @@ async function getQuest(req, res) {
       },
     });
 
-    if (!quest) return res.status(404).json({ error: 'Quest not found' });
+    if (quest.status === 'draft') {
+      return res.status(404).json({ error: 'Quest not found' });
+    }
 
     const myParticipation = quest.participants[0] || null;
     const totalTasks = quest._count.tasks;

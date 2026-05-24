@@ -40,7 +40,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
 
   useEffect(() => {
     if (!initialQuestId) { setLoading(false); return; }
-    api.getQuest(initialQuestId)
+    api.getAdminQuest(initialQuestId)
       .then(({ quest: q, tasks: t }) => {
         setTitle(q.title || ''); setShortDesc(q.shortDescription || '');
         setFullDesc(q.fullDescription || ''); 

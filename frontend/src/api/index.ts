@@ -98,6 +98,7 @@ export const api = {
   // ADMIN — quests
   getAdminStats: () => request<AdminStatsResponse>('GET', '/admin/stats'),
   getAdminQuests: () => request<QuestsResponse>('GET', '/admin/quests'),
+  getAdminQuest:  (id: string) => request<QuestDetailResponse>('GET', `/admin/quests/${id}`),
   createQuest:   (body: Partial<Quest>) => request<CreateQuestResponse>('POST', '/admin/quests', body),
   updateQuest:   (id: string, body: Partial<Quest>) => request<{ quest: Quest }>('PUT', `/admin/quests/${id}`, body),
   deleteQuest:   (id: string) => request<{ message: string }>('DELETE', `/admin/quests/${id}`),
@@ -107,11 +108,11 @@ export const api = {
   updateTask:  (tid: string, body: Partial<EditorTask>) => request<{ task: Task }>('PUT', `/admin/tasks/${tid}`, body),
   deleteTask:  (tid: string) => request<{ message: string }>('DELETE', `/admin/tasks/${tid}`),
 
-  // ADMIN — participants & lifecycle
+  // ADMIN — participants 
   getParticipants: (id: string) => request<ParticipantsResponse>('GET', `/admin/quests/${id}/participants`),
   completeQuest:   (id: string, body?: object) => request<CompleteQuestResponse>('POST', `/admin/quests/${id}/complete`, body),
 
-  // ADMIN — rewards (старые)
+  // ADMIN — rewards
   distributeReward: (rid: string, body: { transactionHash: string; contractAddress?: string }) =>
     request<{ message: string }>('POST', `/admin/rewards/${rid}/distribute`, body),
 

@@ -3,10 +3,6 @@
 const crypto = require('crypto');
 const prisma = require('../config/prisma');
 
-/**
- * Validates Telegram Mini App initData
- * https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
- */
 function validateTelegramInitData(initData) {
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get('hash');
@@ -35,7 +31,7 @@ function validateTelegramInitData(initData) {
   return user;
 }
 
-//  Main auth middleware — validates initData and attaches user to req
+//  validates initData 
 async function authMiddleware(req, res, next) {
   try {
     const initData = req.headers['x-telegram-init-data'];
@@ -44,7 +40,6 @@ async function authMiddleware(req, res, next) {
       return res.status(401).json({ error: 'Missing Telegram initData' });
     }
 
-    // In development, allow mock auth
     let telegramUser;
     if (process.env.NODE_ENV === 'development' && initData === 'dev_mock') {
       telegramUser = { id: 123456789, username: 'devuser', first_name: 'Dev', last_name: 'User' };
@@ -55,7 +50,6 @@ async function authMiddleware(req, res, next) {
       }
     }
 
-    // Upsert user via Prisma
     const user = await prisma.user.upsert({
       where: { telegramId: BigInt(telegramUser.id) },
       update: {
@@ -82,7 +76,7 @@ async function authMiddleware(req, res, next) {
 }
 
 
-// Admin-only middleware (use after authMiddleware)
+// Admin-only middleware
 
 function adminMiddleware(req, res, next) {
   if (req.user?.role !== 'admin') {

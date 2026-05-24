@@ -129,9 +129,6 @@ export function ProfilePage() {
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
               <span style={{ fontSize: 12, color: C.green, fontWeight: 600 }}>Connected</span>
             </div>
-            <div style={{ background: '#060610', borderRadius: 7, padding: '6px 9px', fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, color: '#555', wordBreak: 'break-all' }}>
-              {user.walletAddressFriendly || user.walletAddress}
-            </div>
             <button onClick={disconnectWallet} style={dangerBtnSt}>Disconnect</button>
           </div>
         ) : (

@@ -238,9 +238,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
           <div style={{ background: 'rgba(74,222,128,0.05)', border: '0.5px solid rgba(74,222,128,0.18)', borderRadius: 10, padding: '11px 14px' }}>
             {[
               { l: 'Title',      v: title || '—' },
-              { l: 'Reward', v: fmtReward(rewardAmount, Number(winnersCount)) || '—' },
-              { l: 'Reward/winner', v: rewardAmount ? `${rewardAmount} TON` : '—' },
-              { l: 'Winners',       v: winnersCount || '3' },
+              { l: 'Reward/winner', v: fmtReward(rewardAmount, Number(winnersCount)) || '—' },
               { l: 'Questions',  v: `${tasks.length} added` },
               { l: 'Start date', v: startDate || '—' },
               { l: 'End date',   v: endDate || '—' },
@@ -251,18 +249,7 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
               </div>
             ))}
           </div>
-
-          <div style={{ background: 'rgba(123,110,246,0.06)', border: '0.5px solid rgba(123,110,246,0.2)', borderRadius: 9, padding: '10px 13px' }}>
-            <div style={{ fontSize: 10, color: C.purpleL, fontWeight: 700, marginBottom: 6 }}>Status after launch</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <StatusBadge status="draft" />
-              <span style={{ fontSize: 12, color: C.muted }}>→</span>
-              <StatusBadge status="active" />
-            </div>
-            <div style={{ fontSize: 10, color: C.muted, lineHeight: 1.5 }}>Quest becomes visible to all users immediately after launch</div>
-          </div>
-
-          <button onClick={launch} style={primaryBtnSt}>🚀 Launch Quest</button>
+          <button onClick={launch} style={primaryBtnSt}>Launch Quest</button>
           <button onClick={() => { saveInfo(); }} style={ghostBtnSt}>Save as Draft</button>
 
           {questId && (

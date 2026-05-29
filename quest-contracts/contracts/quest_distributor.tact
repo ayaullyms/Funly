@@ -42,7 +42,7 @@ contract QuestDistributor {
             let addr: Address = s.loadAddress();
             let amount: Int = s.loadCoins();
             let hasNext: Bool = s.loadBool();
-            send(SendParameters{ to: addr, value: amount, bounce: false, mode: 0 });
+            send(SendParameters{ to: addr, value: amount, bounce: false, mode: 1 });
             if (hasNext) { node = s.loadRef(); } else { node = null; }
         }
 

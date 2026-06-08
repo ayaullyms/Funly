@@ -44,6 +44,9 @@ async function submitTask(req, res) {
     if (task.quest.status !== 'active') {
       return res.status(400).json({ error: 'Quest is not active' });
     }
+    if (quest.createdBy === req.user.id) {
+      return res.status(403).json({ error: 'Cannot submit to your own quest' });
+    }
     if (task.quest.endDate && new Date() > new Date(task.quest.endDate)) {
       return res.status(400).json({ error: 'Quest has ended' });
     }

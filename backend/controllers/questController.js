@@ -243,6 +243,9 @@ async function joinQuest(req, res) {
     if (quest.status !== 'active') {
       return res.status(400).json({ error: 'Quest is not active' });
     }
+    if (quest.createdBy === req.user.id) {
+      return res.status(403).json({ error: 'Cannot join your own quest' });
+    }
     if (quest.endDate && new Date() > new Date(quest.endDate)) {
       return res.status(400).json({ error: 'Quest has already ended' });
     }

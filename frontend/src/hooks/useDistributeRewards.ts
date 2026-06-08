@@ -1,7 +1,5 @@
-//frontend/src/hooks/useDistributeRewards.ts
 import { useState, useCallback, useRef } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Cell } from '@ton/core';
 import {
     buildDeployPayload,
     calcTotalTon,
@@ -46,18 +44,8 @@ const TONCENTER_BASE = import.meta.env.VITE_TON_TESTNET === 'true'
     ? 'https://testnet.toncenter.com/api/v2'
     : 'https://toncenter.com/api/v2';
 
-function bocToHash(boc: string): string {
-    try {
-        const cell = Cell.fromBase64(boc);
-        return cell.hash().toString('hex');
-    } catch {
-        return boc;
-    }
-}
-
 async function waitForTxHash(
     contractAddr: string,
-    bocBase64: string,
     onTick: (seconds: number) => void,
     maxAttempts = 30,
     intervalMs  = 3000
@@ -172,15 +160,12 @@ export function useDistributeRewards(questId: string) {
                 nonce: nonceRef.current,
             });
         } catch (e: any) {
-            console.error('FULL ERROR:', e);
-            console.error('STACK:', e.stack);
             set({ step: 'error', error: 'Ошибка buildDeployPayload:\n' + e.message });
             return;
         }
 
-        let bocResult: string;
         try {
-            const result = await tonConnectUI.sendTransaction({
+            await tonConnectUI.sendTransaction({
                 validUntil: Math.floor(Date.now() / 1000) + 600,
                 messages: [{
                     address:   payload.contractAddress,
@@ -189,7 +174,6 @@ export function useDistributeRewards(questId: string) {
                     payload:   payload.bodyBase64,
                 }],
             });
-            bocResult = result.boc;
         } catch (e: any) {
             if (
                 e?.message?.toLowerCase().includes('cancel') ||
@@ -198,7 +182,7 @@ export function useDistributeRewards(questId: string) {
             ) {
                 set({ step: state.missingWallets.length > 0 ? 'no_wallets' : 'confirm' });
             } else {
-                set({ step: 'error', error: ' Ошибка sendTransaction:\n' + e.message });
+                set({ step: 'error', error: 'Ошибка sendTransaction:\n' + e.message });
             }
             return;
         }
@@ -209,7 +193,6 @@ export function useDistributeRewards(questId: string) {
         try {
             realTxHash = await waitForTxHash(
                 payload.contractAddress,
-                bocResult,
                 (seconds) => set({ waitingSeconds: seconds })
             );
         } catch (e: any) {
@@ -217,9 +200,8 @@ export function useDistributeRewards(questId: string) {
             const tonscanBase = isTestnet ? 'https://testnet.tonscan.org' : 'https://tonscan.org';
             set({
                 step: 'error',
-                error: `Transaction was sent but was not confirmed within 60 seconds.\n` +
-                    `Please check it manually here: ${tonscanBase}/address/${payload.contractAddress}\n` +
-                    `If the transaction was successful, click Retry — the transaction hash should be detected automatically.`,
+                error: `Transaction was sent but was not confirmed within 90 seconds.\n` +
+                    `Please check it manually TonScan`,
             });
             return;
         }

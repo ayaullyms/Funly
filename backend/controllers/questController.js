@@ -268,4 +268,39 @@ async function joinQuest(req, res) {
   }
 }
 
-module.exports = { listQuests, getMyQuests, getQuest, getLeaderboard, joinQuest };
+// POST /api/quests/:id/leave
+async function leaveQuest(req, res) {
+  try {
+    const { id } = req.params;
+
+    const quest = await prisma.quest.findUnique({ where: { id } });
+    if (!quest) return res.status(404).json({ error: 'Quest not found' });
+    if (quest.status !== 'active') {
+      return res.status(400).json({ error: 'Can only leave active quests' });
+    }
+
+    const participant = await prisma.questParticipant.findUnique({
+      where: { questId_userId: { questId: id, userId: req.user.id } },
+    });
+    if (!participant) return res.status(404).json({ error: 'Not joined' });
+
+    await prisma.$transaction([
+      prisma.taskSubmission.deleteMany({
+        where: { userId: req.user.id, task: { questId: id } },
+      }),
+      prisma.questParticipant.delete({
+        where: { questId_userId: { questId: id, userId: req.user.id } },
+      }),
+      prisma.quest.update({
+        where: { id },
+        data: { participantsCount: { decrement: 1 } },
+      }),
+    ]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { listQuests, getMyQuests, getQuest, getLeaderboard, joinQuest, leaveQuest };

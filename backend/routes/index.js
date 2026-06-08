@@ -25,6 +25,7 @@ router.get ('/quests/my', questCtrl.getMyQuests);
 router.get ('/quests/:id', questCtrl.getQuest);
 router.get ('/quests/:id/leaderboard', questCtrl.getLeaderboard);
 router.post('/quests/:id/join', questCtrl.joinQuest);
+router.post('/quests/:id/leave', questCtrl.leaveQuest);
 
 // Tasks 
 router.post('/quests/:questId/tasks/:taskId/submit', taskCtrl.submitTask);

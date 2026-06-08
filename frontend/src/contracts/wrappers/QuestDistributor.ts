@@ -69,9 +69,9 @@ export function buildContractData(
     const winnersCell = buildWinnersCell(winners);
 
     return beginCell()
-        .storeBit(false) // Contract is not initialized yet
+        .storeBit(false) 
         .storeAddress(owner)
-        .storeInt(nonce, 257) // init() arg 'nonce' is 257 bits
+        .storeInt(nonce, 257) 
         .storeMaybeRef(winnersCell)
         .endCell();
 }

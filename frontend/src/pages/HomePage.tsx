@@ -83,7 +83,6 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-4 pb-2">
-      {/* Search */}
       <div
         style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -133,7 +132,6 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
         transition: 'border-color 0.15s',
       }}
     >
-      {/* top purple line for joined quest */}
       {q.isJoined && (
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 1,
@@ -172,7 +170,6 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
         )}
       </div>
 
-      {/* progress bar for joined */}
       {q.isJoined && totalTasks > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, height: 2, background: '#2a2a3a', borderRadius: 2 }}>
@@ -190,7 +187,6 @@ function QuestCard({ quest: q, onOpen }: { quest: Quest; onOpen: (id: string) =>
   );
 }
 
-/* ── micro components ── */
 function SmallBadge({ label, color, bg, border }: { label: string; color: string; bg: string; border: string }) {
   return (
     <span style={{

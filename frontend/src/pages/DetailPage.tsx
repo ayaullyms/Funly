@@ -40,6 +40,7 @@ export function DetailPage({ onOpenTask }: Props) {
   const [tab, setTab]         = useState('Info');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showWalletWarning, setShowWalletWarning] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   useEffect(() => {
     if (!questId) return;
@@ -87,6 +88,17 @@ export function DetailPage({ onOpenTask }: Props) {
     } catch (e: any) { showToast(e.message, 'error'); }
   };
 
+  const leaveQuest = async () => {
+    if (!questId) return;
+    try {
+      await api.leaveQuest(questId);
+      showToast('You left the quest');
+      const [qd, lb] = await Promise.all([api.getQuest(questId), api.getLeaderboard(questId)]);
+      setDetailState({ questData: qd, lbData: lb });
+      setShowLeaveConfirm(false);
+    } catch (e: any) { showToast(e.message, 'error'); }
+  };
+
   if (loading) return <SpinnerPage />;
   if (error || !detailState) return <p style={{ color: C.red, textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>{error || 'Failed to load'}</p>;
 
@@ -106,14 +118,59 @@ export function DetailPage({ onOpenTask }: Props) {
           onClose={() => setShowWalletWarning(false)}
         />
       )}
-      {/* Hero */}
+
+      {showLeaveConfirm && (
+        <div onClick={() => setShowLeaveConfirm(false)} style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: '#13131f', border: '0.5px solid #2a2a3a', borderRadius: 20,
+            padding: '20px 18px', width: '100%', maxWidth: 420, margin: '0 12px',
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14, margin: '0 auto 14px',
+              background: 'rgba(248,113,113,0.1)', border: '0.5px solid rgba(248,113,113,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 15, fontWeight: 800, color: '#fff', textAlign: 'center', margin: '0 0 8px' }}>
+              Leave quest?
+            </h3>
+            <p style={{ fontSize: 12, color: '#888', lineHeight: 1.65, textAlign: 'center', margin: '0 0 18px' }}>
+              Your progress and answers will be lost.
+            </p>
+            <button onClick={leaveQuest} style={{
+              width: '100%', padding: '11px 14px', borderRadius: 10,
+              background: '#f87171', border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 8,
+              fontFamily: 'IBM Plex Sans, sans-serif',
+            }}>
+              Leave quest
+            </button>
+            <button onClick={() => setShowLeaveConfirm(false)} style={{
+              width: '100%', padding: '10px 14px', borderRadius: 10,
+              background: 'transparent', border: '0.5px solid #2a2a3a',
+              cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#888',
+              fontFamily: 'IBM Plex Sans, sans-serif',
+            }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <div style={{
         background: `linear-gradient(155deg, #1a1560 0%, ${C.bg} 75%)`,
         borderRadius: 18, overflow: 'hidden',
         border: `0.5px solid ${C.border}`,
       }}>
         <div style={{ padding: '12px 14px 0' }}>
-          {/* back */}
           <button onClick={goBack} style={backBtnStyle}>← Back</button>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', margin: '10px 0 4px' }}>
@@ -127,7 +184,6 @@ export function DetailPage({ onOpenTask }: Props) {
             </div>
           )}
 
-          {/* stats row */}
           {q.isJoined && (
             <div>
               {q.iWon && (
@@ -186,12 +242,28 @@ export function DetailPage({ onOpenTask }: Props) {
             </div>
           )}
 
+          {q.isJoined && q.status === 'active' && (
+            <button onClick={() => setShowLeaveConfirm(true)} style={{
+              width: '100%', background: 'transparent', color: '#f87171',
+              fontSize: 11, fontWeight: 600, padding: '7px 14px',
+              borderRadius: 8, border: '0.5px solid rgba(248,113,113,0.25)',
+              cursor: 'pointer', margin: '4px 0 8px', fontFamily: 'IBM Plex Sans, sans-serif',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Leave quest
+            </button>
+          )}
+
           {q.status === 'active' && !q.isJoined && (
             <button onClick={joinQuest} style={primaryBtnStyle}>Join Quest</button>
           )}
         </div>
 
-        {/* Tabs */}
         <div style={{ display: 'flex', margin: '10px 12px', background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 10, padding: 2 }}>
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
@@ -204,7 +276,6 @@ export function DetailPage({ onOpenTask }: Props) {
         </div>
       </div>
 
-      {/* Tab content */}
       {tab === 'Info'  && <InfoTab quest={q} />}
       {tab === 'Tasks' && <TasksTab tasks={tasks} quest={q} onOpenTask={onOpenTask} />}
       {tab === 'Board' && <BoardTab lbData={lbData} />}
@@ -283,7 +354,7 @@ function WalletWarningModal({
   );
 }
 
-/* ── Info Tab ── */
+/* Info Tab */
 function InfoTab({ quest: q }: { quest: Quest }) {
   return (
     <div className="flex flex-col gap-3">
@@ -318,7 +389,7 @@ function InfoCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-/* ── Tasks Tab ── */
+/* Tasks Tab */
 function TasksTab({ tasks, quest: q, onOpenTask }: { tasks: Task[]; quest: Quest; onOpenTask: (id: string, i: number) => void }) {
   if (!q.isJoined && q.status === 'active') {
     return <p style={{ color: '#555', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Join the quest to unlock tasks</p>;
@@ -362,7 +433,7 @@ function TasksTab({ tasks, quest: q, onOpenTask }: { tasks: Task[]; quest: Quest
   );
 }
 
-/* ── Leaderboard Tab ── */
+/* Leaderboard Tab */
 function BoardTab({ lbData }: { lbData: LeaderboardData }) {
   const { leaderboard: lb, myPosition, totalParticipants } = lbData;
   if (!lb.length) return <p style={{ color: '#555', textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>No participants yet</p>;
@@ -399,13 +470,13 @@ function BoardTab({ lbData }: { lbData: LeaderboardData }) {
   );
 }
 
-/* ── Rules Tab ── */
+/* Rules Tab */
 function RulesTab({ quest: q }: { quest: Quest }) {
   if (!q.rules) return <p style={{ color: '#555', textAlign: 'center', padding: '2rem 0', fontSize: 13 }}>No rules</p>;
   return <p style={{ fontSize: 13, color: '#888', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{q.rules}</p>;
 }
 
-/* ── Shared atoms ── */
+/*  Shared atoms  */
 function TonIcon() {
   return (
     <span style={{

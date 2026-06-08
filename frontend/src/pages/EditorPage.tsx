@@ -24,8 +24,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
   const [questId, setQuestId] = useState<string | null>(initialQuestId);
   const [loading, setLoading] = useState(!!initialQuestId);
   const [step, setStep] = useState(0); 
-
-  /* Quest form */
   const [title,     setTitle]     = useState('');
   const [shortDesc, setShortDesc] = useState('');
   const [fullDesc,  setFullDesc]  = useState('');
@@ -133,7 +131,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      {/* Header with step progress */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: `0.5px solid ${C.border}` }}>
         <button onClick={step > 0 ? () => setStep(s => s - 1) : onBack} style={backBtnSt}>
           {step > 0 ? '← Back' : '← Admin'}
@@ -155,7 +152,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
         <h1 style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{stepLabels[step]}</h1>
       </div>
 
-      {/* ── Step 0: Quest Info ── */}
       {step === 0 && (
         <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 14, padding: 14 }} className="flex flex-col gap-3">
           <Field label="Title *">
@@ -208,7 +204,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
         </div>
       )}
 
-      {/* ── Step 1: Tasks ── */}
       {step === 1 && (
         <div className="flex flex-col gap-4">
           {tasks.length === 0 ? (
@@ -232,7 +227,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
         </div>
       )}
 
-      {/* ── Step 2: Review & Launch ── */}
       {step === 2 && (
         <div className="flex flex-col gap-4">
           <div style={{ background: 'rgba(74,222,128,0.05)', border: '0.5px solid rgba(74,222,128,0.18)', borderRadius: 10, padding: '11px 14px' }}>
@@ -261,7 +255,6 @@ export function EditorPage({ questId: initialQuestId, onBack }: Props) {
   );
 }
 
-/* ── Task editor item ── */
 interface TaskEditorItemProps {
   task: EditorTask; index: number;
   onChange: (p: Partial<EditorTask>) => void;
@@ -396,13 +389,9 @@ const addBtnSt: React.CSSProperties = {
 };
 
 const backBtnSt: React.CSSProperties = {
-  background: 'transparent',
-  color: '#9d90f8',
-  fontSize: 12,
-  fontWeight: 600,
-  padding: '6px 10px',
-  borderRadius: 6,
-  border: '0.5px solid #2a2a3a',
-  cursor: 'pointer',
+  background: 'transparent', color: '#9d90f8',
+  fontSize: 12, fontWeight: 600,
+  padding: '6px 10px', borderRadius: 6,
+  border: '0.5px solid #2a2a3a', cursor: 'pointer',
   fontFamily: 'IBM Plex Sans, sans-serif',
 };

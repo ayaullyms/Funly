@@ -62,7 +62,6 @@ export function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-5 pb-2">
-      {/* Avatar + name — centered */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, paddingBottom: 16, borderBottom: `0.5px solid ${C.border}` }}>
         <div style={{
           width: 56, height: 56, borderRadius: '50%',
@@ -85,7 +84,6 @@ export function ProfilePage() {
         }}>{user.role}</span>
       </div>
 
-      {/* Earnings banner */}
       {totalEarned > 0 && (
         <div style={{
           background: C.bg2, border: `0.5px solid ${C.border}`,
@@ -102,7 +100,6 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
         {[
           { v: stats?.totalTasksCompleted || 0, l: 'Tasks done' },
@@ -117,7 +114,6 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {/* Wallet */}
       <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
         <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, fontFamily: 'IBM Plex Mono, monospace' }}>TON Wallet</div>
         <div style={{ marginBottom: 10 }}>
@@ -141,7 +137,6 @@ export function ProfilePage() {
         )}
       </div>
 
-      {/* Reward history */}
       {rewards.length > 0 && (
         <div>
           <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontFamily: 'IBM Plex Mono, monospace' }}>Reward History</div>

@@ -140,7 +140,6 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      {/* Hero with gradient */}
       <div
         style={{
           background: `linear-gradient(155deg, #1a1560 0%, ${C.bg} 80%)`,
@@ -148,7 +147,6 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
           border: `0.5px solid ${C.border}`,
         }}
       >
-        {/* top row */}
         <div
           style={{
             display: "flex", justifyContent: "space-between",
@@ -172,7 +170,6 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
           </span>
         </div>
 
-        {/* progress bar */}
         <div
           style={{
             height: 2, background: "#2a2a3a", 
@@ -215,7 +212,6 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
         )}
       </div>
 
-      {/* Answer area */}
       {submitted ? (
         <SubmittedView task={task} opts={opts} />
       ) : quest.status !== "active" ? (
@@ -305,7 +301,6 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
         </div>
       )}
 
-      {/* Progress dots */}
       <div style={{ display: "flex", gap: 5, justifyContent: "center" }}>
         {tasks.map((t, i) => {
           let bg = "#2a2a3a";
@@ -320,7 +315,6 @@ export function TaskPage({ taskId, taskIndex: initialIndex, onBack }: Props) {
         })}
       </div>
 
-      {/* Nav */}
       <div style={{ display: "flex", gap: 8 }}>
         {currentIndex > 0 && (
           <button
@@ -434,7 +428,6 @@ function SubmittedView({ task, opts }: { task: Task; opts: string[] }) {
           </div>
         </div>
       )}
-      {/* Result banner */}
       <div
         style={{
           borderRadius: 10, padding: "10px 14px",

@@ -90,6 +90,7 @@ export const api = {
   getQuest:      (id: string)   => request<QuestDetailResponse>('GET', `/quests/${id}`),
   getLeaderboard:(id: string)   => request<LeaderboardResponse>('GET', `/quests/${id}/leaderboard`),
   joinQuest:     (id: string)   => request<JoinResponse>('POST', `/quests/${id}/join`),
+  leaveQuest:    (id: string)   => request<JoinResponse>('POST', `/quests/${id}/leave`),
 
   // TASKS
   submitTask: (questId: string, taskId: string, answer: string) =>

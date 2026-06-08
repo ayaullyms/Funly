@@ -38,13 +38,13 @@ async function submitTask(req, res) {
 
     const task = await prisma.task.findFirst({
       where: { id: taskId, questId },
-      include: { quest: { select: { endDate: true, status: true } } },
+      include: { quest: { select: { endDate: true, status: true, createdBy: true } } },
     });
     if (!task) return res.status(404).json({ error: 'Task not found' });
     if (task.quest.status !== 'active') {
       return res.status(400).json({ error: 'Quest is not active' });
     }
-    if (quest.createdBy === req.user.id) {
+    if (task.quest.createdBy === req.user.id) {
       return res.status(403).json({ error: 'Cannot submit to your own quest' });
     }
     if (task.quest.endDate && new Date() > new Date(task.quest.endDate)) {

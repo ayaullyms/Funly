@@ -409,16 +409,11 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
         <div style={{ flex: 1, paddingRight: 8 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#ddd' }}>{q.title}</div>
           <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>
-            {q.participantsCount || 0} participants · {q.status}
+            {q.status !== 'draft' && `${q.participantsCount || 0} participants · `}{q.status}
           </div>
-          {q.status === 'active' && (
-            <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 10, color: C.muted, }}>
-              <span>{q.participantsCount || 0} started</span>
-              {q.completedCount != null && (
-                <span style={{ color: C.green }}>
-                  ✓ {q.completedCount} finished
-                </span>
-              )}
+          {q.status === 'active' && q.completedCount != null && (
+            <div style={{ marginTop: 6, fontSize: 10 }}>
+              <span style={{ color: C.green }}>✓ {q.completedCount} finished</span>
             </div>
           )}
         </div>
@@ -469,11 +464,11 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
           <button onClick={onActivate} style={primaryBtnSmSt}>▶ Activate</button>
         )}
 
-        <button onClick={toggleW} style={ghostBtnSt}>
-          {isCompleted
-            ? (showW ? 'Hide' : 'Winners')
-            : (showP ? 'Hide' : 'Participants')}
-        </button>
+        {isCompleted && (
+          <button onClick={toggleW} style={ghostBtnSt}>
+            {showW ? 'Hide' : 'Winners'}
+          </button>
+        )}
         <button onClick={onRemove} style={dangerBtnSt}>✕</button>
       </div>
 

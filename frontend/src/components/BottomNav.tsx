@@ -38,7 +38,7 @@ export function BottomNav() {
   const { page, navigate, currentUser } = useApp();
 
   const items = currentUser?.role === 'admin'
-    ? NAV_ITEMS.filter(item => item.id !== 'myquests')
+    ? [...NAV_ITEMS.filter(item => item.id !== 'myquests'), { id: 'admin' as const, label: 'Admin' }]
     : NAV_ITEMS;
 
   if (['detail', 'editor', 'task'].includes(page)) return null;

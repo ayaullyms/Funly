@@ -95,35 +95,17 @@ export function AdminPage({ onOpenEditor }: Props) {
   return (
     <div className="flex flex-col gap-5 pb-2">
 
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div />
         <button onClick={() => onOpenEditor(null)} style={newQuestBtnSt}>+ New Quest</button>
       </div>
 
-      {/* Stats */}
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-          {[
-            { v: stats.totalUsers,              l: 'Users' },
-            { v: stats.submissions?.total || 0, l: 'Submissions' },
-          ].map((s, i) => (
-            <div key={i} style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 10, padding: 10, textAlign: 'center' }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>{s.v}</div>
-              <div style={{ fontSize: 8, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>{s.l}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Tabs */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 10, padding: 3 }}>
         <TabButton label="Active"    count={activeQuests.length}    active={tab === 'active'}    onClick={() => setTab('active')} />
         <TabButton label="Drafts"    count={draftQuests.length}     active={tab === 'draft'}     onClick={() => setTab('draft')} />
         <TabButton label="Done"      count={completedQuests.length} active={tab === 'completed'} onClick={() => setTab('completed')} />
       </div>
 
-      {/* Quest list */}
       {visibleQuests.length === 0 ? (
         <EmptyState text={
           tab === 'active' ? 'No active quests' :

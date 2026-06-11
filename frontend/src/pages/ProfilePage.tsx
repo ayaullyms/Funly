@@ -13,7 +13,8 @@ const C = {
 };
 
 export function ProfilePage() {
-  const { showToast } = useApp();
+  const { showToast, currentUser } = useApp();
+  const isAdmin = currentUser?.role === 'admin';
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
   const [user,    setUser]    = useState<User | null>(null);
@@ -99,20 +100,21 @@ export function ProfilePage() {
           </div>
         </div>
       )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        {[
-          { v: stats?.totalTasksCompleted || 0, l: 'Tasks done' },
-          { v: stats?.totalWins || 0,            l: 'Wins' },
-          { v: stats?.questsJoined || 0,         l: 'Quests joined' },
-          { v: stats?.questsCompleted || 0,      l: 'Completed' },
-        ].map((s, i) => (
-          <div key={i} style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 10, padding: 10, textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>{s.v}</div>
-            <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>{s.l}</div>
-          </div>
-        ))}
-      </div>
+      {!isAdmin && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          {[
+            { v: stats?.totalTasksCompleted || 0, l: 'Tasks done' },
+            { v: stats?.totalWins || 0,            l: 'Wins' },
+            { v: stats?.questsJoined || 0,         l: 'Quests joined' },
+            { v: stats?.questsCompleted || 0,      l: 'Completed' },
+          ].map((s, i) => (
+            <div key={i} style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 10, padding: 10, textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: C.purpleL, fontFamily: 'IBM Plex Mono, monospace' }}>{s.v}</div>
+              <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 2, fontFamily: 'IBM Plex Mono, monospace' }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, padding: 14 }}>
         <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, fontFamily: 'IBM Plex Mono, monospace' }}>TON Wallet</div>
@@ -137,7 +139,7 @@ export function ProfilePage() {
         )}
       </div>
 
-      {rewards.length > 0 && (
+      {!isAdmin && rewards.length > 0 && (
         <div>
           <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontFamily: 'IBM Plex Mono, monospace' }}>Reward History</div>
           <div style={{ background: C.bg2, border: `0.5px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>

@@ -7,7 +7,6 @@ import { useApp } from "../context/AppContext";
 import { useQuestDetail } from "../context/QuestDetailContext";
 
 const FILTERS = [
-  { id: "all", label: "All" },
   { id: "active", label: "Active" },
   { id: "completed", label: "Completed" },
 ];
@@ -29,25 +28,19 @@ export function MyQuestsPage() {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("active");
 
   useEffect(() => {
     api
       .getMyQuests()
       .then((d) => {
-        const visibleQuests = (d.quests || []).filter(
-          (q: Quest) => q.status !== "draft",
-        );
-        setQuests(visibleQuests);
+        setQuests(d.quests || []);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = quests.filter((q) => {
-    if (q.status === "draft") return false;
-    return filter === "all" ? true : q.status === filter;
-  });
+  const filtered = quests.filter((q) => q.status === filter);
 
   const openQuest = (id: string) => {
     sessionStorage.setItem("questReturnPage", "myquests");
@@ -56,9 +49,6 @@ export function MyQuestsPage() {
     navigate("detail");
   };
 
-  const active = quests.filter((q) => q.status === "active").length;
-  const completed = quests.filter((q) => q.status === "completed").length;
-  const won = quests.filter((q) => (q as any).iWon).length;
   const earned = quests.reduce(
     (s, q) => s + Number((q as any).rewardAmount || 0),
     0,
@@ -81,43 +71,6 @@ export function MyQuestsPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-2">
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}
-      >
-        {[
-          { v: quests.length, l: "Joined" },
-          { v: active, l: "Active" },
-          { v: won, l: "Won" },
-        ].map((s, i) => (
-          <div
-            key={i}
-            style={{
-              background: C.bg2, border: `0.5px solid ${C.border}`,
-              borderRadius: 9, padding: 8, textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 16, fontWeight: 800,
-                color: C.purpleL, fontFamily: "IBM Plex Mono, monospace",
-              }}
-            >
-              {s.v}
-            </div>
-            <div
-              style={{
-                fontSize: 8, color: C.muted,
-                textTransform: "uppercase",
-                letterSpacing: 0.4, marginTop: 1,
-                fontFamily: "IBM Plex Mono, monospace",
-              }}
-            >
-              {s.l}
-            </div>
-          </div>
-        ))}
-      </div>
-
       {earned > 0 && (
         <div
           style={{
@@ -181,7 +134,7 @@ export function MyQuestsPage() {
 
       {filtered.length === 0 ? (
         <EmptyState
-          text="No quests yet"
+          text={filter === "active" ? "No active quests" : "No completed quests"}
           action={
             <button
               onClick={() => navigate("home")}

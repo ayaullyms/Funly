@@ -38,7 +38,7 @@ export function BottomNav() {
   const { page, navigate, currentUser } = useApp();
 
   const items = currentUser?.role === 'admin'
-    ? [...NAV_ITEMS, { id: 'admin' as const, label: 'Admin' }]
+    ? NAV_ITEMS.filter(item => item.id !== 'myquests')
     : NAV_ITEMS;
 
   if (['detail', 'editor', 'task'].includes(page)) return null;
@@ -71,12 +71,6 @@ export function BottomNav() {
                 transition: 'color 0.15s',
               }}
             >
-              {/* <div style={{
-                width: 4, height: 4, borderRadius: '50%',
-                background: isActive ? '#7B6EF6' : 'transparent',
-                transition: 'background 0.15s',
-                marginBottom: 1,
-              }} /> */}
               {ICONS[item.id]?.(isActive)}
               {item.label}
             </button>

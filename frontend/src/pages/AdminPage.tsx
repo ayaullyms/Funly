@@ -469,7 +469,9 @@ function AdminQuestRow({ quest: q, onEdit, onActivate, onFinish, onRemove, onDis
             {showW ? 'Hide' : 'Winners'}
           </button>
         )}
-        <button onClick={onRemove} style={dangerBtnSt}>✕</button>
+        {q.status !== 'completed' && (
+          <button onClick={onRemove} style={dangerBtnSt}>✕</button>
+        )}
       </div>
 
       {(showP || showW) && (
